@@ -1,0 +1,226 @@
+table { 
+	font: 80% Verdana, Arial, Helvetica, sans-serif;
+	color: #000;
+	text-align: left;
+	border-collapse: collapse;
+	border: 1px solid #666666;
+}
+tr.odd {
+	background-color: #f8ffff;
+}
+tr:hover, tr.odd:hover {
+	background-color: #f8ffff;
+	color: #ffffff;
+}
+tr {
+	vertical-align: top;
+}
+td {
+        border-left: 0px solid #dadada;
+}
+        
+body {
+        font:11px/1.5 Verdana, Arial, Helvetica, sans-serif; background:#FFF
+}
+#text {margin:50px auto; width:500px}
+.hotspot {color:#900; padding-bottom:1px; border-bottom:1px dotted #900; cursor:pointer}       
+#tt {position:absolute; display:block}
+#tttop {display:block; height:5px; margin-left:5px}
+#ttcont {display:block; padding:2px 12px 3px 7px; margin-left:5px; background:#666; color:#FFF}
+#ttbot {display:block; height:5px; margin-left:5px; overflow:hidden}
+        
+a:hover {
+        text-decoration: none;
+        color: #CC9900;
+}
+h1 {
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 28px;
+        font-weight: bolder;
+}
+h2 {
+        font-family: Verdana, Arial, Helvetica, sans-serif;
+        font-size: 16px;
+        font-weight: normal;
+        color: #e05422;
+}
+verysmall {
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 11px;
+        color: #444444;
+        font-weight: normal;
+        text-decoration: none;
+}
+verysmallstrong {
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 11px;
+        color: #444444;
+        font-weight: bold;
+        text-decoration: none;
+}
+small {
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 14px;
+        color: #444444;
+        font-weight: normal;
+        text-decoration: none;
+}
+strong {
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 16px;
+        font-weight: bold;
+        color: #e05422;
+}
+a {
+        color: #000002;
+}
+.textareaResize {
+        resize:both;
+}
+.pagetitle {
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 28px;
+        font-weight: bolder;
+        color: #444444;
+}
+.largertext {
+        font-family: Arial, Helvetica, sans-serif;
+        font-style:normal;
+        font-weight:normal;
+        font-size: 19px;
+        color: #444444;
+}
+.bodytext {
+        font-family: Arial, Helvetica, sans-serif;
+        font-style:normal;
+        font-weight:normal;
+        font-size: 16px;
+        color: #444444;
+}
+.smallertext {
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 10px;
+        color: #444444;
+}
+         
+body, td, p, div, small, big, ul, ol {
+        font-family: Arial, Helvetica, sans-serif;
+        font-style:normal;
+        font-weight:normal;
+        font-size: 16px;
+        color: #444444;
+}
+         
+p {
+        margin: 10px 10px 10px 10px;
+}
+         
+.blue {
+        color: #E05422;
+}
+.red {
+        color: #FF0000;
+}
+.gray {
+        color: #444444;
+}
+.bigblue {
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 20px;
+        font-weight: bolder;
+        color: #E05422;
+}
+         
+a.biglink:link {text-decoration: none; font-size: 14px}
+a.biglink:visited {text-decoration: none; font-weight: bold; font-size: 14px}
+a.biglink:active {color: #CC9900; font-weight: bold; font-size: 16px}
+a.biglink:hover {color: #CC9900; font-weight: bold; font-size: 16px}
+         
+a.tinylink:link {text-decoration: none; font-size: 12px}
+a.tinylink:visited {text-decoration: none; font-size: 12px}
+a.tinylink:active {color: #CC9900; font-size: 12px}
+a.tinylink:hover {color: #CC9900; font-size: 12px}
+         
+biglink {
+        font-family: Arial, Helvetica, sans-serif;
+        font-style:normal;
+        font-weight:normal;
+        font-size: 10px;
+        color: #444444;
+}
+         
+div.justborder {
+        border: #87ceeb 1px solid;
+        margin: 10px 10px 10px 10px;
+}
+         
+input.btn {
+        color:#09f;
+        font-family:'trebuchet ms',helvetica,sans-serif;
+        font-size:84%;
+        font-weight:bold;
+        background-color:#eff;
+        border:1px solid;
+        border-top-color:#396;
+        border-left-color:#396;
+        border-right-color:#063;
+        border-bottom-color:#063;
+}
+         
+input.largebtn {
+        color:#09f;
+        width:15em;
+        font-family:'trebuchet ms',helvetica,sans-serif;
+        font-size:84%;
+        font-weight:bold;
+        background-color:#eff;
+        border:1px solid;
+        border-top-color:#396;
+        border-left-color:#396;
+        border-right-color:#063;
+        border-bottom-color:#063;
+}
+         
+input.lightbtn {
+        color: #0099FF;
+        font-size:84%;
+        background-color:#fff;
+        border: none;
+}
+         
+.topbanner {
+        border: none;
+        margin: 0 0 1em 0;
+        padding: 0;
+        height: 5em;
+        text-align: center;
+        width: auto;
+}
+         
+.bcenter, .bleft, .bright {
+        font-size: 90%;
+        padding: 0;
+        position: relative;
+        text-align: center;
+}
+         
+.bleft {
+        float: left;
+        margin: 1em 0 0 1em;
+}
+         
+.bright {
+        float: right;
+        margin: 1em 1em 0 0;
+}
+
+.textfield {
+        width: 300px;
+        margin: auto;
+}
+
+.textfield_power {
+        width: 50px;
+        margin: auto;
+        text-align: center;
+}

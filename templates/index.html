@@ -1,0 +1,66 @@
+{% extends "layout.html" %}
+{% block body %}
+<body>
+  <center>
+  <font color=grey>Burn your watts carefully to minimize that ITT time and grab the KOM!</font>
+  <form action="{{ url_for('optimize') }}" method="post">
+    <font color=#e05422>Environment</font><br>
+    Assumptions: 1 atm pressure, 20 deg C, 0.2 relative humidity, 700x23c tires with CRR=0.004 (smooth tarmac)<br><br>
+    <table>
+        <tr>
+          <td>Segment URL:</td>
+          <td><input class="textfield" type="text" name="rideurl" placeholder="e.g. app.strava.com/segments/3689048" required /></td>
+        </tr>
+        <tr>
+          <td>Rider + bike weight (kg):</td>
+          <td><input class="textfield" type="text" name="weight" placeholder="Combined weight (kg)" required /></td>
+        </tr>
+        <tr>
+          <td>Frontal CdA (m^2):</td>
+          <td><input class="textfield" type="text" name="frontalcda" placeholder="Reasonable values between 0.1 and 0.4" required /></td>
+        </tr>
+        <tr>
+          <td>Wind direction (deg):</td>
+          <td><input class="textfield" type="text" name="winddirection" placeholder="N is 0 degrees, E is 90 degrees" required /></td>
+        </tr>
+        <tr>
+          <td>Wind velocity (km/h):</td>
+          <td><input class="textfield" type="text" name="windvelocity" placeholder="Reasonable values around 0-50 km/h" required /></td>
+        </tr>
+        <tr>
+          <td>Segment granularity</td>
+          <td><input class="range" name="resolution" min="0.00002" max="0.0004" step="0.00002" value="0.00004" required /></td>
+        </tr>
+    </table><br>
+    <font color=#e05422>Critical Power (watts)</font><br>
+    Can be obtained <a href=http://app.strava.com/athlete/analysis>here</a> if you have Strava Premium, use GoldenCheetah or TrainingPeaks otherwise.<br><br>
+          <table>
+            <tr>
+              <td align=center>30s</td>
+              <td align=center>1m</td>
+              <td align=center>5m</td>
+              <td align=center>10m</td>
+              <td align=center>20m</td>
+              <td align=center>30m</td>
+              <td align=center>60m</td>
+            </tr>
+            <tr>
+              <td><input class="textfield_power" type="text" name="30sPower" required /></td>
+              <td><input class="textfield_power" type="text" name="1mPower" required /></td>
+              <td><input class="textfield_power" type="text" name="5mPower" required /></td>
+              <td><input class="textfield_power" type="text" name="10mPower" required /></td>
+              <td><input class="textfield_power" type="text" name="20mPower" required /></td>
+              <td><input class="textfield_power" type="text" name="30mPower" required /></td>
+              <td><input class="textfield_power" type="text" name="60mPower" required /></td>
+            </tr>
+          </table><br>
+        <input type="submit" class=btn value="Optimize!">
+  </form>
+  <div id=output>
+    <div id=console>
+      <textarea name=console id=console style='height:420px; width:793px; background:#FFC; resize:both; min-height:200px; min-width:200px;'>{{ console }}</textarea>
+    </div>
+  </div>
+</center>
+</body>
+{% endblock %}

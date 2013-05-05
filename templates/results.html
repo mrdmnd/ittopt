@@ -1,0 +1,19 @@
+{% extends "layout.html" %}
+{% block head %}
+<meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCd-8DOsC9LPFYI_8NQ0fRoLIJyXeEyw7M&sensor=false"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='gmaputil.js') }}"></script>
+{% endblock %}
+
+
+
+{% block body %}
+<body onload="initialize({{mapcoords}})">
+  <center>
+  <div id="map_canvas" style='height:420px; width:793px;'>A map canvas goes here.</div>
+  <div id=console>
+    <textarea name=console id=console style='height:420px; width:793px; background:#FFC; resize:both; min-height:200px; min-width:200px;'>{{ console }}</textarea>
+  </div>
+  </center>
+</body>
+{% endblock %}
