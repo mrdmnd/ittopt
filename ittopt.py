@@ -1,6 +1,5 @@
 from flask import Flask, request, url_for, render_template 
 from stravalib import *
-import pygmaps
 DEBUG = True
 
 app = Flask(__name__)
