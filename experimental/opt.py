@@ -23,14 +23,14 @@ class CourseSeg(object):
     x = math.cos(math.radians(la1))*math.sin(math.radians(la2)) - math.sin(math.radians(la1))*math.cos(math.radians(la2))*math.cos(dLon)
     self.bearing = math.atan2(y, x) if math.atan2(y, x) >= 0 else math.pi + math.atan2(y, x) # bearing is in radians from north, between [0, 2Pi]
     
-    self.grade = 1.0*self.elev_change / self.flat_distance # average grade of this segment, as rise over run (45 degrees is 100%)
+    self.grade = (1.0*self.elev_change) / self.flat_distance # average grade of this segment, as rise over run (45 degrees is 100%)
     self.total_distance = math.sqrt(self.elev_change**2.0 + self.flat_distance**2.0) 
     self.wind_speed = wind_speed
     diff = (self.bearing - wind_dir) % (2*math.pi)
     self.wind_alpha = math.pi - diff # the relative angle of the wind, zero is "head on", +/- pi is "tail wind"
 
   def __repr__(self):
-    return "<Segment: dist=%d, elev_change=%d, grade=%.2f, bearing=%.4f, wind speed=%d, wind alpha=%.4f>" % (self.total_distance, self.elev_change, 100*self.grade, self.bearing, self.wind_speed, self.wind_alpha)
+    return "<Segment: dist=%d, elev_change=%.2f, grade=%.2f, bearing=%.4f, wind speed=%d, wind alpha=%.4f>" % (self.total_distance, self.elev_change, 100*self.grade, self.bearing, self.wind_speed, self.wind_alpha)
 
   def timeTaken(self, power, weight, crr, cda, rho):
     # Apply fixed power on this segment
@@ -38,9 +38,31 @@ class CourseSeg(object):
     print average_vel
     return self.total_distance / average_vel
 
+
+def lla2ecef(p):
+  # Uses WGS84 ECEF formula
+  a = 6378137
+  f = (1.0 / 298.257223563)
+  b = a * (1 - f)
+  asq = a**2.0
+  bsq = b**2.0
+  e = math.sqrt((asq - bsq)/asq)
+  
+  (lat, lon, h) = p
+  lat_radians = math.radians(lat)
+  lon_radians = math.radians(lon)
+  N = a / math.sqrt(1 - (e * math.sin(lat_radians))**2.0)
+
+  X = (N + h)*math.cos(lat_radians)*math.cos(lon_radians)
+  Y = (N + h)*math.cos(lat_radians)*math.sin(lon_radians)
+  Z = ((bsq / asq)*N + h) * math.sin(lat_radians)
+
+  return (X, Y, Z)
+
 def main(args):
   base = args.base
   verbose = args.verbose
+  compress = args.compress
   if verbose:
     print "Launching optimization in verbose mode..."
   print "Reading directory %s" % base
@@ -60,6 +82,8 @@ def main(args):
     print "Loaded environment info: %s" % str(environment_info)
     print "Loading course file %s" % course_file
 
+  air_density = airDensity(environment_info['AIR_TEMP'], environment_info['AIR_PRESSURE'], environment_info['DEW_POINT'])
+
   full_course_file = os.path.join(base, course_file)
   if not os.path.exists(full_course_file):
     print "Could not find course file %s" % full_course_file
@@ -67,7 +91,10 @@ def main(args):
   lat_lon_alt = parseCourseFile(full_course_file)
   if verbose:
     print "Initial array has %d points" % len(lat_lon_alt)
-  reduced_lat_lon_alt = ramer_douglas_peucker(lat_lon_alt, 0.000001)
+  if compress:
+    reduced_lat_lon_alt = ramer_douglas_peucker(lat_lon_alt, 0.0005)
+  else:
+    reduced_lat_lon_alt = lat_lon_alt
   if verbose:
     print "Reduced array has %d points" % len(reduced_lat_lon_alt)
     #for point in reduced_lat_lon_alt:
@@ -77,7 +104,7 @@ def main(args):
   cum_dist = 0
   for segment in segment_list:
     print segment
-    time = segment.timeTaken(300, 88, 0.005, 0.260, 1.226)
+    time = segment.timeTaken(300, 88, 0.005, 0.300, air_density)
     print "Time at 300W, 88kg: %.3f" % time
     cum_time += time
     cum_dist += segment.total_distance
@@ -195,11 +222,29 @@ def speedAtFixedPower(weight, grade, crr, cda, rho, power, v, a):
     return ((G*weight)/math.sqrt(1+grade**2.0))*(crr+grade) + 0.5*cda*rho*(upvca)*rt + (cda*rho*u*(u**2 + 0.75*v**2 + twouvca + 0.25* v**2 * math.cos(2*a))) / rt
   return scipy.optimize.fsolve(f, 17, fprime=f_deriv)[0]
 
+def airDensity(temp, pressure, dewpoint):
+  # reasonable values are shown in parens
+  # temp in degrees C (25)
+  # pressure in pascals (101800)
+  # dew point in degrees C (7.5)
+  # output is air density in kg / m^3
+  c_0 = 6.1078
+  c_1 = 7.5
+  c_2 = 237.3
+  P_v = c_0 * (10 ** ((c_1 * dewpoint)/(c_2 + dewpoint)) )
+  P_d = pressure - P_v
+  T_k = temp + 273.15
+  R_v = 461.4964
+  R_d = 287.0531
+
+  rho = (P_d / (R_d * T_k)) + (P_v / (R_v * T_k))
+  return rho
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
   parser.add_argument("base", help="The base directory containing experiment parameters.")
   parser.add_argument("-v", "--verbose", help="Enable verbose output.", action="store_true")
+  parser.add_argument("-c", "--compress", help="Enable Ramer-Douglas-Peucker polyline decimation.", action="store_true")
   args = parser.parse_args()
   main(args)
 
