@@ -1,36 +1,55 @@
 import argparse
 import glob
 import os
+from numpy.linalg import norm
 import numpy
 import scipy.optimize
-import math
+from math import sin, cos, atan2, sqrt, radians, degrees, pi, atan
 
-earth_rad = 6371000 # radius of earth in metersi
+radius = 6378137 # radius of earth in meters
 
 class CourseSeg(object):
-  def __init__(self, p1, p2, wind_speed, wind_dir):
-    # p1, p2 are (lat, lon, alt) tuples
-    (la1, lo1, al1) = p1
-    (la2, lo2, al2) = p2
-    self.elev_change = al2 - al1 # elevation change in meters
-    dLat = math.radians(la2 - la1)
-    dLon = math.radians(lo2 - lo1)
-    a = math.sin(dLat/2) * math.sin(dLat/2) + math.cos(math.radians(la1)) * math.cos(math.radians(la2)) * math.sin(dLon/2) * math.sin(dLon/2)
-    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
-    d = earth_rad * c
-    self.flat_distance = d
-    y = math.sin(dLon) * math.cos(math.radians(la2))
-    x = math.cos(math.radians(la1))*math.sin(math.radians(la2)) - math.sin(math.radians(la1))*math.cos(math.radians(la2))*math.cos(dLon)
-    self.bearing = math.atan2(y, x) if math.atan2(y, x) >= 0 else math.pi + math.atan2(y, x) # bearing is in radians from north, between [0, 2Pi]
+  def __init__(self, lla_1, lla_2, wind_speed, wind_dir):
+    self.lla_1 = lla_1
+    self.lla_2 = lla_2
+    self.ecef_1 = lla2ecef(lla_1)
+    self.ecef_2 = lla2ecef(lla_2)
     
-    self.grade = (1.0*self.elev_change) / self.flat_distance # average grade of this segment, as rise over run (45 degrees is 100%)
-    self.total_distance = math.sqrt(self.elev_change**2.0 + self.flat_distance**2.0) 
-    self.wind_speed = wind_speed
-    diff = (self.bearing - wind_dir) % (2*math.pi)
-    self.wind_alpha = math.pi - diff # the relative angle of the wind, zero is "head on", +/- pi is "tail wind"
+    (la1, lo1, al1) = lla_1
+    (la2, lo2, al2) = lla_2
+    # Convert to radians now
+    la1 = radians(la1)
+    lo1 = radians(lo1)
+    la2 = radians(la2)
+    lo2 = radians(lo2)
 
-  def __repr__(self):
-    return "<Segment: dist=%d, elev_change=%.2f, grade=%.2f, bearing=%.4f, wind speed=%d, wind alpha=%.4f>" % (self.total_distance, self.elev_change, 100*self.grade, self.bearing, self.wind_speed, self.wind_alpha)
+    dLat = la2 - la1
+    dLon = lo2 - lo1
+    
+    a = sin(dLat/2)**2.0 + cos(la1) * cos(la2) * sin(dLon/2)**2.0
+    self.flat_distance_lla = radius * 2 * atan2(sqrt(a), sqrt(1-a))
+    self.elev_change_lla = al2 - al1
+    self.elev_change_ecef = norm(self.ecef_2) - norm(self.ecef_1)
+    self.total_distance_lla = sqrt(self.elev_change_lla**2.0 + self.flat_distance_lla**2.0)
+    self.total_distance_ecef = norm(self.ecef_2 - self.ecef_1)
+    self.flat_distance_ecef = sqrt(self.total_distance_ecef**2.0 - self.elev_change_ecef**2.0)
+
+    self.grade_lla = self.elev_change_lla / self.flat_distance_lla
+    self.grade_ecef = self.elev_change_ecef / self.flat_distance_ecef
+    
+    y = sin(dLon) * cos(la2)
+    x = cos(la1)*sin(la2) - sin(la1)*cos(la2)*cos(dLon)
+    val = atan2(y, x)
+
+    self.bearing = val if val >= 0 else pi + val # bearing is in radians from north, between [0, 2Pi]
+    self.wind_speed = wind_speed 
+    self.wind_alpha = pi - ((self.bearing - wind_dir) % (2*pi)) # the relative angle of the wind, zero is "head on", +/- pi is "tail wind"
+
+  def lla_str(self):
+    return "<Segment (lla): dist=%.2f, elev_change=%.2f, grade=%.2f, bearing=%.4f>" % (self.total_distance_lla, self.elev_change_lla, 100*self.grade_lla, degrees(self.bearing))
+  
+  def ecef_str(self):
+    return "<Segment (ecef): dist=%.2f, elev_change=%.2f, grade=%.2f, bearing=%.4f>" % (self.total_distance_ecef, self.elev_change_ecef, 100*self.grade_ecef, degrees(self.bearing))
 
   def timeTaken(self, power, weight, crr, cda, rho):
     # Apply fixed power on this segment
@@ -41,28 +60,25 @@ class CourseSeg(object):
 
 def lla2ecef(p):
   # Uses WGS84 ECEF formula
-  a = 6378137
-  f = (1.0 / 298.257223563)
-  b = a * (1 - f)
-  asq = a**2.0
-  bsq = b**2.0
-  e = math.sqrt((asq - bsq)/asq)
+  a = 6378137.0
+  e = 0.08181919084262149
   
   (lat, lon, h) = p
-  lat_radians = math.radians(lat)
-  lon_radians = math.radians(lon)
-  N = a / math.sqrt(1 - (e * math.sin(lat_radians))**2.0)
+  lat_radians = radians(lat)
+  lon_radians = radians(lon)
+  N = a / sqrt(1 - (e * sin(lat_radians))**2.0)
 
-  X = (N + h)*math.cos(lat_radians)*math.cos(lon_radians)
-  Y = (N + h)*math.cos(lat_radians)*math.sin(lon_radians)
-  Z = ((bsq / asq)*N + h) * math.sin(lat_radians)
+  X = (N + h)*cos(lat_radians)*cos(lon_radians)
+  Y = (N + h)*cos(lat_radians)*sin(lon_radians)
+  Z = ((0.9933056200098478)*N + h) * sin(lat_radians)
 
-  return (X, Y, Z)
+  return numpy.array((X, Y, Z))
 
 def main(args):
   base = args.base
   verbose = args.verbose
   compress = args.compress
+  
   if verbose:
     print "Launching optimization in verbose mode..."
   print "Reading directory %s" % base
@@ -82,34 +98,43 @@ def main(args):
     print "Loaded environment info: %s" % str(environment_info)
     print "Loading course file %s" % course_file
 
-  air_density = airDensity(environment_info['AIR_TEMP'], environment_info['AIR_PRESSURE'], environment_info['DEW_POINT'])
+  #air_density = airDensity(environment_info['AIR_TEMP'], environment_info['AIR_PRESSURE'], environment_info['DEW_POINT'])
 
   full_course_file = os.path.join(base, course_file)
   if not os.path.exists(full_course_file):
     print "Could not find course file %s" % full_course_file
     return
   lat_lon_alt = parseCourseFile(full_course_file)
-  if verbose:
-    print "Initial array has %d points" % len(lat_lon_alt)
   if compress:
-    reduced_lat_lon_alt = ramer_douglas_peucker(lat_lon_alt, 0.0005)
+    print compress
+    ecef_points = map(lla2ecef, lat_lon_alt)
+    compression_threshold = 35
+    compressed_indices = ramer_douglas_peucker(ecef_points, compression_threshold)
+    compressed_lat_lon_alt = [lat_lon_alt[i] for i in compressed_indices]
+
+    for compressedlla in compressed_lat_lon_alt:
+      print repr(compressedlla[1]) + "," + repr(compressedlla[0]) + "," + repr(compressedlla[2])
+
+    segment_list = buildSegments(compressed_lat_lon_alt, environment_info['WIND_VELOCITY'], environment_info['WIND_DIRECTION'])
   else:
-    reduced_lat_lon_alt = lat_lon_alt
-  if verbose:
-    print "Reduced array has %d points" % len(reduced_lat_lon_alt)
-    #for point in reduced_lat_lon_alt:
-    #  print repr(point[1])+","+repr(point[0])+","+repr(point[2])
-  segment_list = buildSegments(reduced_lat_lon_alt, environment_info['WIND_VELOCITY'], environment_info['WIND_DIRECTION'])
-  cum_time = 0
-  cum_dist = 0
+    segment_list = buildSegments(lat_lon_alt, environment_info['WIND_VELOCITY'], environment_info['WIND_DIRECTION'])
+
+  total_elev = 0
+  total_dist = 0
   for segment in segment_list:
-    print segment
-    time = segment.timeTaken(300, 88, 0.005, 0.300, air_density)
-    print "Time at 300W, 88kg: %.3f" % time
-    cum_time += time
-    cum_dist += segment.total_distance
-    print "cumulative time: %.3f" % cum_time
-  print "Went %.2f meters at average speed of %.3f." % (cum_dist, cum_dist / cum_time)
+    print segment.ecef_str()
+    print segment.lla_str()
+    print "--------------------"
+    total_elev += segment.elev_change_lla
+    total_dist += segment.total_distance_lla
+  
+
+  if verbose:
+    if compress:
+      print "Original course had %d points, new course has %d points." % (len(ecef_points), len(compressed_lat_lon_alt))
+    else:
+      print "Course has %d points." % len(lat_lon_alt)
+    print "Total elev change %.2f, total dist %.2f" % (total_elev, total_dist)
     
 def parseParameterFile(param_file):
   rider_info = {}
@@ -149,34 +174,33 @@ def parseCourseFile(course_file):
         lat_lon_alt.append((lat, lon, alt))
   return lat_lon_alt
 
-def ramer_douglas_peucker(points, epsilon):
-  firstPoint = points[0]
-  lastPoint = points[-1]
-  if len(points) < 3:
-    return points
-  index = -1
+def ramer_douglas_peucker(points, threshold):
+  return [0] + ramer_douglas_peucker_aux(0, len(points)-1, points, threshold) + [len(points)-1]
+
+def ramer_douglas_peucker_aux(first_ind, last_ind, points, epsilon):
+  # return a list of indices ind such that points[ind[whatever]] is a control point between first_ind and last_ind, exclusive 
+  if last_ind - first_ind < 2:
+    return []
+  firstPoint = points[first_ind]
+  lastPoint = points[last_ind]
+  index = first_ind-1
   dist = 0
-  for i in range(1, len(points)-1):
+  for i in range(first_ind+1, last_ind):
     cDist = perpendicularDist(points[i], firstPoint, lastPoint)
     if cDist > dist:
       dist = cDist
       index = i
   if dist > epsilon:
-    L1 = points[0:index+1]
-    L2 = points[index:]
-    R1 = ramer_douglas_peucker(L1, epsilon)
-    R2 = ramer_douglas_peucker(L2, epsilon)
-    return R1[0:-1]+R2
+    R1 = ramer_douglas_peucker_aux(first_ind, index, points, epsilon)
+    R2 = ramer_douglas_peucker_aux(index, last_ind, points, epsilon)
+    return R1 + [index] + R2
   else:
-    return [firstPoint, lastPoint]
+    return []
 
 def perpendicularDist(p, p1, p2):
-  #@TODO: this is unlikely to actually work the way we want. 
-  #we need a better of way of figuring out the perpendicular distance 
-  #(right now, it treats long/lat as if they were in units of METERS! gasp!)
   lineseg = (p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2])
   resultant = (p[0] - p1[0], p[1] - p1[1], p[2] - p1[2])
-  return numpy.linalg.norm(numpy.cross(lineseg, resultant)) / numpy.linalg.norm(lineseg)
+  return norm(numpy.cross(lineseg, resultant)) / norm(lineseg)
 
 def buildSegments(lat_lon_alt, wind_speed, wind_dir):
   # For each adjacent lat_lon_alt point, constructs a segment between them 
@@ -188,7 +212,7 @@ def buildSegments(lat_lon_alt, wind_speed, wind_dir):
     segs.append(seg)
   return segs
 
-def requiredPower(weight, grade, crr, cda, rho, u, v, a):
+def powerAtFixedSpeed(weight, grade, crr, cda, rho, u, v, a):
   # weight is total weight (rider+bike) in kg
   # grade is a float (0.0-1.0) (unitless)
   # crr is a float (unitless)
@@ -198,28 +222,28 @@ def requiredPower(weight, grade, crr, cda, rho, u, v, a):
   # v is "wind velocity" a float (m/s)
   # a is  RELATIVE wind angle to rider's direction (zero = head on, +/- pi = tail on)
   G = 9.8067
-  hill_angle = math.atan(grade)
+  hill_angle = atan(grade)
   #F_drag = 0.5 * cda * rho * u * u
-  w = math.sqrt( (u + v*math.cos(a))**2 + (v*math.sin(a))**2 )
-  cos_b = (u + v*math.cos(a)) / w
+  w = sqrt( (u + v*cos(a))**2 + (v*sin(a))**2 )
+  cos_b = (u + v*cos(a)) / w
   F_drag = 0.5 * cda * rho * w**2.0 * cos_b
-  F_rolling = G * math.cos(hill_angle) * crr * weight
-  F_grav = G * math.sin(hill_angle) * weight
+  F_rolling = G * cos(hill_angle) * crr * weight
+  F_grav = G * sin(hill_angle) * weight
   P_hub = (F_grav + F_rolling + F_drag) * u
   return P_hub
 
 def speedAtFixedPower(weight, grade, crr, cda, rho, power, v, a):
-  # the "inverse" of requiredPower.
+  # the "inverse" of powerAtFixedSpeed.
   G = 9.8067
   def f(u):
-    upvca = u + v*math.cos(a)
-    return ((G*u*weight)/math.sqrt(1+grade**2.0))*(crr+grade)   +   0.5*cda*rho*u * upvca * math.sqrt(upvca**2.0 + (v*math.sin(a))**2.0) - power
+    upvca = u + v*cos(a)
+    return ((G*u*weight)/sqrt(1+grade**2.0))*(crr+grade)   +   0.5*cda*rho*u * upvca * sqrt(upvca**2.0 + (v*sin(a))**2.0) - power
   def f_deriv(u):
-    cosa = math.cos(a)
+    cosa = cos(a)
     upvca = u + v*cosa
     twouvca = 2*u*v*cosa
-    rt = math.sqrt(u**2 + v**2 + twouvca)
-    return ((G*weight)/math.sqrt(1+grade**2.0))*(crr+grade) + 0.5*cda*rho*(upvca)*rt + (cda*rho*u*(u**2 + 0.75*v**2 + twouvca + 0.25* v**2 * math.cos(2*a))) / rt
+    rt = sqrt(u**2 + v**2 + twouvca)
+    return ((G*weight)/sqrt(1+grade**2.0))*(crr+grade) + 0.5*cda*rho*(upvca)*rt + (cda*rho*u*(u**2 + 0.75*v**2 + twouvca + 0.25* v**2 * cos(2*a))) / rt
   return scipy.optimize.fsolve(f, 17, fprime=f_deriv)[0]
 
 def airDensity(temp, pressure, dewpoint):
@@ -239,6 +263,33 @@ def airDensity(temp, pressure, dewpoint):
 
   rho = (P_d / (R_d * T_k)) + (P_v / (R_v * T_k))
   return rho
+
+def criticalPower(time, constraints):
+  if time in constraints:
+    return constraints[time]
+
+  # Does linear interpolation between relevant discrete constraints
+  # constraints is a dictionary mapping timeintervalsec:power
+  keys = sorted(list(constraints))
+  if time < keys[0]:
+    # critical power for something before the "thirty second" power is just thirty second power
+    print "requested time before CP constraints start"
+    return constraints[keys[0]]
+  if time > keys[-1]:
+    print "requested time after CP constraints end"
+    # critical power for something beyond "hour power" is just hour power
+    return constraints[keys[-1]]
+  # identify lower and upper bound, and linear interpolate
+  max_index = 0
+  while keys[max_index] < time:
+    max_index += 1
+
+  lower_bound_time = keys[max_index-1]
+  upper_bound_time = keys[max_index]
+  alpha = 1.0*(time - lower_bound_time) / (upper_bound_time - lower_bound_time)
+  print alpha
+  return constraints[lower_bound_time] + alpha*(constraints[upper_bound_time] - constraints[lower_bound_time])
+
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()
