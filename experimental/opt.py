@@ -46,7 +46,9 @@ class CourseSeg(object):
 
   def timeTaken(self, power, weight, crr, cda, rho):
     # Apply fixed power on this segment
-    
+    # TODO: this is sorta fucked for downhill segments; we assume the terminal velocity applies to the whole segment, and if they're short it's really bad
+    # TODO: similarly, for short uphills, we carry no momentum from the previous segment
+    # this needs to have an initial velocity input as well, i think. we also need to model acceleration better
     average_vel = speedAtFixedPower(weight, self.grade_lla, crr, cda, rho, power, self.wind_speed, self.wind_alpha)
     print "average vel %f" % average_vel
     return self.total_distance_lla / average_vel
@@ -237,7 +239,6 @@ def powerAtFixedSpeed(weight, grade, crr, cda, rho, u, v, a):
 
 def speedAtFixedPower(weight, grade, crr, cda, rho, power, v, a):
   # the "inverse" of powerAtFixedSpeed.
-  print weight, grade, crr, cda, rho, power, v, a
   def f(u):
     # returns difference in power between actual, targetted power, and power required to sustain a speed
     # output is in watts
@@ -304,17 +305,15 @@ def chooseOptimalConstantPower(segment_list, constraints, weight, crr, cda, rho,
   print "Initial power guess: %f. Time taken at this power: %f" % (p_0, t_0)
 
   improvement = min_time - t_0
-  p_old = p_0
   t_old = t_0
   while improvement > 0.1:
     p_new = criticalPower(t_old, constraints)
     t_new = cumulativeTimeTakenAtPower(segment_list, p_new, weight, crr, cda, rho)
+    print "New power p_new is %.2f, new time is %.2f" % (p_new, t_new)
     if t_new < min_time:
       min_time = t_new
       best_power = p_new
-    improvement = t_new - t_old
-    print improvement
-    p_old = p_new
+    improvement = t_old - t_new
     t_old = t_new
   return best_power
 
