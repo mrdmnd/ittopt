@@ -14,18 +14,14 @@ class CourseSeg(object):
     self.lla_2 = lla_2
     self.ecef_1 = lla2ecef(lla_1)
     self.ecef_2 = lla2ecef(lla_2)
-    
     (la1, lo1, al1) = lla_1
     (la2, lo2, al2) = lla_2
-    # Convert to radians now
     la1 = radians(la1)
     lo1 = radians(lo1)
     la2 = radians(la2)
     lo2 = radians(lo2)
-
     dLat = la2 - la1
     dLon = lo2 - lo1
-    
     a = sin(dLat/2)**2.0 + cos(la1) * cos(la2) * sin(dLon/2)**2.0
     self.flat_distance_lla = radius * 2 * atan2(sqrt(a), sqrt(1-a))
     self.elev_change_lla = al2 - al1
@@ -33,14 +29,11 @@ class CourseSeg(object):
     self.total_distance_lla = sqrt(self.elev_change_lla**2.0 + self.flat_distance_lla**2.0)
     self.total_distance_ecef = norm(self.ecef_2 - self.ecef_1)
     self.flat_distance_ecef = sqrt(self.total_distance_ecef**2.0 - self.elev_change_ecef**2.0)
-
     self.grade_lla = self.elev_change_lla / self.flat_distance_lla
     self.grade_ecef = self.elev_change_ecef / self.flat_distance_ecef
-    
     y = sin(dLon) * cos(la2)
     x = cos(la1)*sin(la2) - sin(la1)*cos(la2)*cos(dLon)
     val = atan2(y, x)
-
     self.bearing = val if val >= 0 else pi + val # bearing is in radians from north, between [0, 2Pi]
     self.wind_speed = wind_speed 
     self.wind_alpha = pi - ((self.bearing - wind_dir) % (2*pi)) # the relative angle of the wind, zero is "head on", +/- pi is "tail wind"
@@ -53,9 +46,10 @@ class CourseSeg(object):
 
   def timeTaken(self, power, weight, crr, cda, rho):
     # Apply fixed power on this segment
-    average_vel = speedAtFixedPower(weight, self.grade, crr, cda, rho, power, self.wind_speed, self.wind_alpha)
-    print average_vel
-    return self.total_distance / average_vel
+    
+    average_vel = speedAtFixedPower(weight, self.grade_lla, crr, cda, rho, power, self.wind_speed, self.wind_alpha)
+    print "average vel %f" % average_vel
+    return self.total_distance_lla / average_vel
 
 
 def lla2ecef(p):
@@ -98,7 +92,6 @@ def main(args):
     print "Loaded environment info: %s" % str(environment_info)
     print "Loading course file %s" % course_file
 
-  #air_density = airDensity(environment_info['AIR_TEMP'], environment_info['AIR_PRESSURE'], environment_info['DEW_POINT'])
 
   full_course_file = os.path.join(base, course_file)
   if not os.path.exists(full_course_file):
@@ -111,10 +104,6 @@ def main(args):
     compression_threshold = 35
     compressed_indices = ramer_douglas_peucker(ecef_points, compression_threshold)
     compressed_lat_lon_alt = [lat_lon_alt[i] for i in compressed_indices]
-
-    for compressedlla in compressed_lat_lon_alt:
-      print repr(compressedlla[1]) + "," + repr(compressedlla[0]) + "," + repr(compressedlla[2])
-
     segment_list = buildSegments(compressed_lat_lon_alt, environment_info['WIND_VELOCITY'], environment_info['WIND_DIRECTION'])
   else:
     segment_list = buildSegments(lat_lon_alt, environment_info['WIND_VELOCITY'], environment_info['WIND_DIRECTION'])
@@ -135,6 +124,13 @@ def main(args):
     else:
       print "Course has %d points." % len(lat_lon_alt)
     print "Total elev change %.2f, total dist %.2f" % (total_elev, total_dist)
+  constraints = buildCriticalPower(rider_info)
+  weight = rider_info["RIDER_WEIGHT"] + rider_info["BIKE_WEIGHT"]
+  crr = rider_info["RIDER_CRR"]
+  cda = rider_info["RIDER_CDA"]
+  air_density = airDensity(environment_info['AIR_TEMP'], environment_info['AIR_PRESSURE'], environment_info['DEW_POINT'])
+  initial_power_guess = 240
+  chooseOptimalConstantPower(segment_list, constraints, weight, crr, cda, air_density, initial_power_guess)
     
 def parseParameterFile(param_file):
   rider_info = {}
@@ -156,6 +152,18 @@ def parseParameterFile(param_file):
       if not line.startswith('#'):
         course_file = line.split(", ")[1]
   return rider_info, environment_info, course_file
+
+def buildCriticalPower(rider_info):
+  d = {}
+  d[30] = rider_info["POWER_30"]
+  d[60] = rider_info["POWER_60"]
+  d[300] = rider_info["POWER_300"]
+  d[600] = rider_info["POWER_600"]
+  d[120] = rider_info["POWER_1200"]
+  d[1800] = rider_info["POWER_1800"]
+  d[3600] = rider_info["POWER_3600"]
+  return d
+  
 
 def parseCourseFile(course_file):
   lat_lon_alt = []
@@ -234,18 +242,17 @@ def powerAtFixedSpeed(weight, grade, crr, cda, rho, u, v, a):
 
 def speedAtFixedPower(weight, grade, crr, cda, rho, power, v, a):
   # the "inverse" of powerAtFixedSpeed.
-  G = 9.8067
   def f(u):
-    upvca = u + v*cos(a)
-    return ((G*u*weight)/sqrt(1+grade**2.0))*(crr+grade)   +   0.5*cda*rho*u * upvca * sqrt(upvca**2.0 + (v*sin(a))**2.0) - power
-  def f_deriv(u):
-    cosa = cos(a)
-    upvca = u + v*cosa
-    twouvca = 2*u*v*cosa
-    rt = sqrt(u**2 + v**2 + twouvca)
-    return ((G*weight)/sqrt(1+grade**2.0))*(crr+grade) + 0.5*cda*rho*(upvca)*rt + (cda*rho*u*(u**2 + 0.75*v**2 + twouvca + 0.25* v**2 * cos(2*a))) / rt
-  return scipy.optimize.fsolve(f, 17, fprime=f_deriv)[0]
+    # returns difference in power between actual, targetted power, and power required to sustain a speed
+    # output is in watts
+    return power - powerAtFixedSpeed(weight, grade, crr, cda, rho, u, v, a)
 
+  res = scipy.optimize.brentq(f, -0.001, 25, full_output=True)
+
+
+
+  print res[1]
+  return res[0]
 def airDensity(temp, pressure, dewpoint):
   # reasonable values are shown in parens
   # temp in degrees C (25)
@@ -287,8 +294,36 @@ def criticalPower(time, constraints):
   lower_bound_time = keys[max_index-1]
   upper_bound_time = keys[max_index]
   alpha = 1.0*(time - lower_bound_time) / (upper_bound_time - lower_bound_time)
-  print alpha
   return constraints[lower_bound_time] + alpha*(constraints[upper_bound_time] - constraints[lower_bound_time])
+
+def cumulativeTimeTakenAtPower(segment_list, power, weight, crr, cda, rho):
+  time = 0
+  for segment in segment_list:
+    time += segment.timeTaken(power, weight, crr, cda, rho)
+  return time
+
+def chooseOptimalConstantPower(segment_list, constraints, weight, crr, cda, rho, initial_power_guess):
+  min_time = 99999999
+  best_power = 0
+  p_0 = initial_power_guess
+  t_0 = cumulativeTimeTakenAtPower(segment_list, p_0, weight, crr, cda, rho)
+  
+  print "Initial power guess: %f. Time taken at this power: %f" % (p_0, t_0)
+
+  improvement = min_time - t_0
+  p_old = p_0
+  t_old = t_0
+  while improvement > 0.1:
+    p_new = criticalPower(t_old, constraints)
+    t_new = cumulativeTimeTakenAtPower(segment_list, p_new, weight, crr, cda, rho)
+    if t_new < min_time:
+      min_time = t_new
+      best_power = p_new
+    improvement = t_new - t_old
+    print improvement
+    p_old = p_new
+    t_old = t_new
+  return best_power
 
 
 if __name__ == "__main__":
