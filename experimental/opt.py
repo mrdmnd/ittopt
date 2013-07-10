@@ -56,16 +56,13 @@ def lla2ecef(p):
   # Uses WGS84 ECEF formula
   a = 6378137.0
   e = 0.08181919084262149
-  
   (lat, lon, h) = p
   lat_radians = radians(lat)
   lon_radians = radians(lon)
   N = a / sqrt(1 - (e * sin(lat_radians))**2.0)
-
   X = (N + h)*cos(lat_radians)*cos(lon_radians)
   Y = (N + h)*cos(lat_radians)*sin(lon_radians)
   Z = ((0.9933056200098478)*N + h) * sin(lat_radians)
-
   return numpy.array((X, Y, Z))
 
 def main(args):
@@ -92,7 +89,6 @@ def main(args):
     print "Loaded environment info: %s" % str(environment_info)
     print "Loading course file %s" % course_file
 
-
   full_course_file = os.path.join(base, course_file)
   if not os.path.exists(full_course_file):
     print "Could not find course file %s" % full_course_file
@@ -117,7 +113,6 @@ def main(args):
     total_elev += segment.elev_change_lla
     total_dist += segment.total_distance_lla
   
-
   if verbose:
     if compress:
       print "Original course had %d points, new course has %d points." % (len(ecef_points), len(compressed_lat_lon_alt))
@@ -164,7 +159,6 @@ def buildCriticalPower(rider_info):
   d[3600] = rider_info["POWER_3600"]
   return d
   
-
 def parseCourseFile(course_file):
   lat_lon_alt = []
   with open(course_file) as f:
@@ -233,26 +227,25 @@ def powerAtFixedSpeed(weight, grade, crr, cda, rho, u, v, a):
   hill_angle = atan(grade)
   #F_drag = 0.5 * cda * rho * u * u
   w = sqrt( (u + v*cos(a))**2 + (v*sin(a))**2 )
-  cos_b = (u + v*cos(a)) / w
-  F_drag = 0.5 * cda * rho * w**2.0 * cos_b
+  F_drag = 0.5 * cda * rho * w * (u + v*cos(a))
   F_rolling = G * cos(hill_angle) * crr * weight
   F_grav = G * sin(hill_angle) * weight
   P_hub = (F_grav + F_rolling + F_drag) * u
-  return P_hub
+  # it's possible we have to do "negative power" to counteract gravity - that is, gravity alone will take us to a a speed above $u$ m/s
+  return max(P_hub, 0)
+ 
 
 def speedAtFixedPower(weight, grade, crr, cda, rho, power, v, a):
   # the "inverse" of powerAtFixedSpeed.
+  print weight, grade, crr, cda, rho, power, v, a
   def f(u):
     # returns difference in power between actual, targetted power, and power required to sustain a speed
     # output is in watts
     return power - powerAtFixedSpeed(weight, grade, crr, cda, rho, u, v, a)
 
-  res = scipy.optimize.brentq(f, -0.001, 25, full_output=True)
+  return scipy.optimize.brentq(f, 0.1, 25)
 
 
-
-  print res[1]
-  return res[0]
 def airDensity(temp, pressure, dewpoint):
   # reasonable values are shown in parens
   # temp in degrees C (25)
