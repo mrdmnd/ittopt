@@ -2,22 +2,37 @@
 {% block body %}
 <body>
   <center>
-  <font color=grey>Burn your watts carefully to minimize that ITT time and grab the KOM!</font>
+  <font color=grey>Burn your watts optimally to minimize that ITT time and grab the KOM!</font>
   <form action="{{ url_for('optimize') }}" method="post">
     <font color=#e05422>Environment</font><br>
-    Assumptions: 1 atm pressure, 20 deg C, 0.2 relative humidity, 700x23c tires with CRR=0.004 (smooth tarmac)<br><br>
     <table>
         <tr>
-          <td>Segment URL:</td>
-          <td><input class="textfield" type="text" name="rideurl" placeholder="e.g. app.strava.com/segments/3689048" required /></td>
+          <td>RideWithGPS Segment URL:</td>
+          <td><input class="textfield" type="text" name="rideurl" placeholder="e.g. ridewithgps.com/routes/2800836" required /></td>
         </tr>
         <tr>
-          <td>Rider + bike weight (kg):</td>
-          <td><input class="textfield" type="text" name="weight" placeholder="Combined weight (kg)" required /></td>
+          <td>Total weight (kg):</td>
+          <td><input class="textfield" type="text" name="weight" placeholder="Combined weight of rider and all equipment (kg)" required /></td>
         </tr>
         <tr>
           <td>Frontal CdA (m^2):</td>
-          <td><input class="textfield" type="text" name="frontalcda" placeholder="Reasonable values between 0.1 and 0.4" required /></td>
+          <td><input class="textfield" type="text" name="cda" placeholder="Reasonable values between 0.1 and 0.4" required /></td>
+        </tr>
+        <tr>
+          <td>CRR (unitless):</td>
+          <td><input class="textfield" type="text" name="crr" value="0.004" placeholder="Reasonable values between 0.003 and 0.006" required /></td>
+        </tr>
+        <tr>
+          <td>Temperature (celsius):</td>
+          <td><input class="textfield" type="text" name="temp" placeholder="Room temperature is about 25 deg celsius." required /></td>
+        </tr>
+        <tr>
+          <td>Dewpoint (celsius):</td>
+          <td><input class="textfield" type="text" name="dewpoint" placeholder="Look this up in a weather report." required /></td>
+        </tr>
+        <tr>
+          <td>Air pressure (pascals):</td>
+          <td><input class="textfield" type="text" name="pressure" placeholder="One atmosphere is 101,800 Pascals, decreasing with altitude." required /></td>
         </tr>
         <tr>
           <td>Wind direction (deg):</td>
@@ -28,12 +43,12 @@
           <td><input class="textfield" type="text" name="windvelocity" placeholder="Reasonable values around 0-50 km/h" required /></td>
         </tr>
         <tr>
-          <td>Segment granularity</td>
-          <td><input class="range" name="resolution" min="0.00002" max="0.0004" step="0.00002" value="0.00004" required /></td>
+          <td>Number of Waypoints</td>
+          <td><input class="range" name="resolution" min="2" max="50" step="1" value="10" required /></td>
         </tr>
     </table><br>
     <font color=#e05422>Critical Power (watts)</font><br>
-    Can be obtained <a href=http://app.strava.com/athlete/analysis>here</a> if you have Strava Premium, use GoldenCheetah or TrainingPeaks otherwise.<br><br>
+    This represents the maximum power you can output for each duration. We interpolate linearly between measured durations.
           <table>
             <tr>
               <td align=center>30s</td>
