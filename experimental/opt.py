@@ -40,7 +40,7 @@ class CourseSeg(object):
 
   def lla_str(self):
     return "<Segment (lla): dist=%.2f, elev_change=%.2f, grade=%.2f, bearing=%.4f>" % (self.total_distance_lla, self.elev_change_lla, 100*self.grade_lla, degrees(self.bearing))
-  
+
   def ecef_str(self):
     return "<Segment (ecef): dist=%.2f, elev_change=%.2f, grade=%.2f, bearing=%.4f>" % (self.total_distance_ecef, self.elev_change_ecef, 100*self.grade_ecef, degrees(self.bearing))
 
@@ -71,7 +71,7 @@ def main(args):
   base = args.base
   verbose = args.verbose
   compress = args.compress
-  
+
   if verbose:
     print "Launching optimization in verbose mode..."
   print "Reading directory %s" % base
@@ -114,7 +114,7 @@ def main(args):
     print "--------------------"
     total_elev += segment.elev_change_lla
     total_dist += segment.total_distance_lla
-  
+
   if verbose:
     if compress:
       print "Original course had %d points, new course has %d points." % (len(ecef_points), len(compressed_lat_lon_alt))
@@ -128,39 +128,7 @@ def main(args):
   air_density = airDensity(environment_info['AIR_TEMP'], environment_info['AIR_PRESSURE'], environment_info['DEW_POINT'])
   initial_power_guess = 240
   chooseOptimalConstantPower(segment_list, constraints, weight, crr, cda, air_density, initial_power_guess)
-    
-def parseParameterFile(param_file):
-  rider_info = {}
-  environment_info = {}
-  course_file = ""
-  with open(param_file) as f:
-    # Sections are separated by white space, so we look for the blank lines.
-    lines = f.read()
-    rider, env, course = lines.split('\n\n')
-    for line in rider.splitlines():
-      if not line.startswith('#'):
-        key, val = line.split(",")
-        rider_info[key] = float(val)
-    for line in env.splitlines():
-      if not line.startswith('#'):
-        key, val = line.split(",")
-        environment_info[key] = float(val)
-    for line in course.splitlines():
-      if not line.startswith('#'):
-        course_file = line.split(", ")[1]
-  return rider_info, environment_info, course_file
 
-def buildCriticalPower(rider_info):
-  d = {}
-  d[30] = rider_info["POWER_30"]
-  d[60] = rider_info["POWER_60"]
-  d[300] = rider_info["POWER_300"]
-  d[600] = rider_info["POWER_600"]
-  d[120] = rider_info["POWER_1200"]
-  d[1800] = rider_info["POWER_1800"]
-  d[3600] = rider_info["POWER_3600"]
-  return d
-  
 def parseCourseFile(course_file):
   lat_lon_alt = []
   with open(course_file) as f:
@@ -235,7 +203,7 @@ def powerAtFixedSpeed(weight, grade, crr, cda, rho, u, v, a):
   P_hub = (F_grav + F_rolling + F_drag) * u
   # it's possible we have to do "negative power" to counteract gravity - that is, gravity alone will take us to a a speed above $u$ m/s
   return max(P_hub, 0)
- 
+
 
 def speedAtFixedPower(weight, grade, crr, cda, rho, power, v, a):
   # the "inverse" of powerAtFixedSpeed.
@@ -301,7 +269,7 @@ def chooseOptimalConstantPower(segment_list, constraints, weight, crr, cda, rho,
   best_power = 0
   p_0 = initial_power_guess
   t_0 = cumulativeTimeTakenAtPower(segment_list, p_0, weight, crr, cda, rho)
-  
+
   print "Initial power guess: %f. Time taken at this power: %f" % (p_0, t_0)
 
   improvement = min_time - t_0
@@ -316,7 +284,6 @@ def chooseOptimalConstantPower(segment_list, constraints, weight, crr, cda, rho,
     improvement = t_old - t_new
     t_old = t_new
   return best_power
-
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser()

@@ -1,6 +1,6 @@
-from flask import Flask, request, url_for, render_template 
-from stravalib import *
-import tempfile
+from flask import Flask, request, url_for, render_template
+import os
+import ittoptlib
 DEBUG = True
 
 app = Flask(__name__)
@@ -15,7 +15,6 @@ def optimize():
   try:
     url = request.form["rideurl"]
     model_params["num_waypoints"] = float(request.form["resolution"])
-    
     model_params = {}
     model_params["rider"] = {}
     model_params["rider"]["weight"] = float(request.form["weight"])
@@ -36,22 +35,14 @@ def optimize():
     model_params["power"][3600] = float(request.form["60mPower"])
   except ValueError:
     return render_template('index.html', console="Try using numerical values, silly.")
-
-  path_to_experiment = BuildExperimentDirectory(url, model_params)
-  results = ProcessExperimentDirectory(path_to_experiment)
+  # The meat of the engine.
+  course_data = ParseCourseKML(url)
+  results = RunExperiment(course_data, model_params)
   return RenderResults(results)
 
-def BuildExperimentDirectory(url):
-  # Construct a folder with all of the correct parameter files.
-  path = tempfile.mkdtemp()
-  DownloadCourseKML(url, path)
-  WriteParameterFile(weight, cda, crr, temp, dewpoint, pressure, wind_direction, wind_velocity,
-                     num_waypoints
-  return path
+def ParseCourseKML(url):
+  content = urllib2.request(url)
 
-def ProcessExperimentDirectory(path):
-  # Load values into optimizer and optimize!
-  pass
 def RenderResults(results):
   return render_template('results.html', console="Foobar!", mapcoords=dsfho)
 
