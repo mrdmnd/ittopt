@@ -1,6 +1,7 @@
 from flask import Flask, request, url_for, render_template
 import os
 import ittoptlib
+import requests
 DEBUG = True
 
 app = Flask(__name__)
@@ -14,18 +15,14 @@ def show_mainpage():
 def optimize():
   try:
     url = request.form["rideurl"]
-    model_params["num_waypoints"] = float(request.form["resolution"])
     model_params = {}
-    model_params["rider"] = {}
-    model_params["rider"]["weight"] = float(request.form["weight"])
-    model_params["rider"]["cda"]  = float(request.form["cda"])
-    model_params["rider"]["crr"] = float(request.form["crr"])
-    model_params["environ"] = {}
-    model_params["environ"]["temp"] = float(request.form["temp"])
-    model_params["environ"]["dewpoint"] = float(request.form["dewpoint"])
-    model_params["environ"]["pressure"] = float(request.form["pressure"])
-    model_params["environ"]["wind_direction"] = float(request.form["winddirection"])
-    model_params["environ"]["wind_velocity"] = float(request.form["windvelocity"])
+    model_params["resolution"] = float(request.form["resolution"])
+    model_params["weight"] = float(request.form["weight"])
+    model_params["cda"]  = float(request.form["cda"])
+    model_params["crr"] = float(request.form["crr"])
+    model_params["rho"] = ittoptlib.airDensity(float(request.form["temp"]), float(request.form["pressure"]), float(request.form["dewpoint"]))
+    model_params["wind_direction"] = float(request.form["winddirection"])
+    model_params["wind_velocity"] = float(request.form["windvelocity"])
     model_params["power"] = {}
     model_params["power"][30] = float(request.form["30sPower"])
     model_params["power"][60] = float(request.form["1mPower"])
@@ -38,13 +35,33 @@ def optimize():
   # The meat of the engine.
   course_data = ParseCourseKML(url)
   results = RunExperiment(course_data, model_params)
-  return RenderResults(results)
+  return render_template('index.html', console="Optimal power of %d watts yields optimal time of %.2f seconds." % results)
 
 def ParseCourseKML(url):
-  content = urllib2.request(url)
+  content = requsts.get(url).content
+  started = False
+  finished = False
+  allPoints = []
+  for line in content.splitlines():
+    if "<coordinates>" in line:
+      started = True
+      continue
+    if "</coordinates>" in line:
+      finished = True
+    if started and not finished:
+      lon, lat, alt = map(float, line.split(","))
+      allPoints.append(ittoptlib.LLAPoint(lat, lon, alt))
+  return allPoints
 
-def RenderResults(results):
-  return render_template('results.html', console="Foobar!", mapcoords=dsfho)
+def RunExperiment(course_data, model):
+  # Compress course data
+  ecef_course_data = map(ittoptlib.lla2ecef, course_data)
+  compression_threshold = model["resolution"]
+  compressed_indices = ittoptlib.ramer_douglas_peucker(ecef_course_data, compression_threshold)
+  segment_list = ittoptlib.buildSegments(compressed_indices, course_data, model)
+  initial_power_guess = model["power"][3600] * 0.80
+  (best_power, best_time) = ittoptlib.chooseOptimalConstantPower(segment_list, model, initial_power_guess)
+  return (best_power, best_time)
 
 if __name__ == '__main__':
   app.run(debug=True)

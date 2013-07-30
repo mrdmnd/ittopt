@@ -35,15 +35,15 @@
           <td><input class="textfield" type="text" name="pressure" placeholder="One atmosphere is 101,800 Pascals, decreasing with altitude." required /></td>
         </tr>
         <tr>
-          <td>Wind direction (deg):</td>
-          <td><input class="textfield" type="text" name="winddirection" placeholder="N is 0 degrees, E is 90 degrees" required /></td>
+          <td>Wind direction (radians):</td>
+          <td><input class="textfield" type="text" name="winddirection" placeholder="N is 0 degrees, E is 0.5*Pi, S is Pi, W is 1.5*Pi" required /></td>
         </tr>
         <tr>
-          <td>Wind velocity (km/h):</td>
-          <td><input class="textfield" type="text" name="windvelocity" placeholder="Reasonable values around 0-50 km/h" required /></td>
+          <td>Wind velocity (m/s):</td>
+          <td><input class="textfield" type="text" name="windvelocity" placeholder="Reasonable values around 0-6 m/s" required /></td>
         </tr>
         <tr>
-          <td>Number of Waypoints</td>
+          <td>Ramer-Douglas Compression Threshold (m)</td>
           <td><input class="range" name="resolution" min="2" max="50" step="1" value="10" required /></td>
         </tr>
     </table><br>
