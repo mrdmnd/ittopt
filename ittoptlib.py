@@ -12,13 +12,13 @@ class LLAPoint(object):
     self.lon = lon
     self.alt = alt
   def distance(self, other):
-    return sqrt(self.flatDistance(other)**2.0 + self.elevDist(other)**2.0)
+    return sqrt(self.flatDistance(other)**2.0 + self.elevDiff(other)**2.0)
   def elevDiff(self, other):
     return other.alt - self.alt
   def flatDistance(self, other):
     dLat = other.lat - self.lat
     dLon = other.lon - self.lon
-    a = sin(dLat/2)**2.0 + cos(la1) * cos(la2) * sin(dLon/2)**2.0
+    a = sin(dLat/2)**2.0 + cos(self.lat) * cos(other.lat) * sin(dLon/2)**2.0
     return 2 * radius * atan2(sqrt(a), sqrt(1-a))
   def bearing(self, other):
     dLon = other.lon - self.lon
@@ -51,6 +51,9 @@ class CourseSeg(object):
     self.bearing = lla_1.bearing(lla_2)
     self.wind_alpha = pi - ((self.bearing - wind_dir) % (2*pi)) 
     # the relative angle of the wind, zero is "head on", +/- pi is "tail wind"
+
+  def __repr__(self):
+    return "<Segment: Dist=%.2f, Grade=%.2f, Elev=%.2f>" % (self.total_distance, 100*self.grade, self.elev_change)
 
   def timeTaken(self, power, model):
     # Apply fixed power on this segment
@@ -135,7 +138,7 @@ def chooseOptimalConstantPower(segment_list, model, initial_power_guess):
       best_power = p_new
     improvement = t_old - t_new
     t_old = t_new
-  return best_power
+  return (best_power, min_time)
 
 def ramer_douglas_peucker(points, threshold):
   return [0] + ramer_douglas_peucker_aux(0, len(points)-1, points, threshold) + [len(points)-1]
@@ -172,14 +175,16 @@ def buildSegments(compressed_indices, course_data, model):
     p1 = course_data[first_ind]
     p2 = course_data[second_ind]
     # TODO: decide if we want to use flat distance here instead
-    aggregate_distance = sum( [course_data[i].distance(course_data[i+1]) for i in range(first_index, second_index)])
+    aggregate_distance = 0
+    for i in range(first_ind, second_ind):
+        aggregate_distance += course_data[i].distance(course_data[i+1])
     seg = CourseSeg(p1, p2, aggregate_distance, wind_speed, wind_dir)
     segs.append(seg)
   return segs
 
 def perpendicularDist(p, p1, p2):
-  lineseg =   (p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2])
-  resultant = ( p[0] - p1[0],  p[1] - p1[1],  p[2] - p1[2])
+  lineseg =   p2.point - p1.point
+  resultant = p.point - p1.point
   return norm(numpy.cross(lineseg, resultant)) / norm(lineseg)
 
 def lla2ecef(llaPoint):

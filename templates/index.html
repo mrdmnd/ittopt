@@ -8,15 +8,15 @@
     <table>
         <tr>
           <td>RideWithGPS Segment URL:</td>
-          <td><input class="textfield" type="text" name="rideurl" placeholder="e.g. ridewithgps.com/routes/2800836" required /></td>
+          <td><input class="textfield" type="text" name="rideurl" value="ridewithgps.com/routes/2800836" placeholder="e.g. ridewithgps.com/routes/2800836" required /></td>
         </tr>
         <tr>
           <td>Total weight (kg):</td>
-          <td><input class="textfield" type="text" name="weight" placeholder="Combined weight of rider and all equipment (kg)" required /></td>
+          <td><input class="textfield" type="text" name="weight" value="88.0" placeholder="Combined weight of rider and all equipment (kg)" required /></td>
         </tr>
         <tr>
           <td>Frontal CdA (m^2):</td>
-          <td><input class="textfield" type="text" name="cda" placeholder="Reasonable values between 0.1 and 0.4" required /></td>
+          <td><input class="textfield" type="text" name="cda" value="0.270" placeholder="Reasonable values between 0.1 and 0.4" required /></td>
         </tr>
         <tr>
           <td>CRR (unitless):</td>
@@ -24,27 +24,27 @@
         </tr>
         <tr>
           <td>Temperature (celsius):</td>
-          <td><input class="textfield" type="text" name="temp" placeholder="Room temperature is about 25 deg celsius." required /></td>
+          <td><input class="textfield" type="text" name="temp" value="25" placeholder="Room temperature is about 25 deg celsius." required /></td>
         </tr>
         <tr>
           <td>Dewpoint (celsius):</td>
-          <td><input class="textfield" type="text" name="dewpoint" placeholder="Look this up in a weather report." required /></td>
+          <td><input class="textfield" type="text" name="dewpoint" value="8.5" placeholder="Look this up in a weather report." required /></td>
         </tr>
         <tr>
           <td>Air pressure (pascals):</td>
-          <td><input class="textfield" type="text" name="pressure" placeholder="One atmosphere is 101,800 Pascals, decreasing with altitude." required /></td>
+          <td><input class="textfield" type="text" name="pressure" value="101800" placeholder="One atmosphere is 101,800 Pascals, decreasing with altitude." required /></td>
         </tr>
         <tr>
           <td>Wind direction (radians):</td>
-          <td><input class="textfield" type="text" name="winddirection" placeholder="N is 0 degrees, E is 0.5*Pi, S is Pi, W is 1.5*Pi" required /></td>
+          <td><input class="textfield" type="text" name="winddirection" value="0" placeholder="N is 0 degrees, E is 0.5*Pi, S is Pi, W is 1.5*Pi" required /></td>
         </tr>
         <tr>
           <td>Wind velocity (m/s):</td>
-          <td><input class="textfield" type="text" name="windvelocity" placeholder="Reasonable values around 0-6 m/s" required /></td>
+          <td><input class="textfield" type="text" name="windvelocity" value="0" placeholder="Reasonable values around 0-6 m/s" required /></td>
         </tr>
         <tr>
           <td>Ramer-Douglas Compression Threshold (m)</td>
-          <td><input class="range" name="resolution" min="2" max="50" step="1" value="10" required /></td>
+          <td><input class="range" name="resolution" min="25" max="50" step="1" value="35" placeholder="Threshold for point elision." required /></td>
         </tr>
     </table><br>
     <font color=#e05422>Critical Power (watts)</font><br>
@@ -60,20 +60,20 @@
               <td align=center>60m</td>
             </tr>
             <tr>
-              <td><input class="textfield_power" type="text" name="30sPower" required /></td>
-              <td><input class="textfield_power" type="text" name="1mPower" required /></td>
-              <td><input class="textfield_power" type="text" name="5mPower" required /></td>
-              <td><input class="textfield_power" type="text" name="10mPower" required /></td>
-              <td><input class="textfield_power" type="text" name="20mPower" required /></td>
-              <td><input class="textfield_power" type="text" name="30mPower" required /></td>
-              <td><input class="textfield_power" type="text" name="60mPower" required /></td>
+              <td><input class="textfield_power" type="text" name="30sPower" value="800" required /></td>
+              <td><input class="textfield_power" type="text" name="1mPower" value="550" required /></td>
+              <td><input class="textfield_power" type="text" name="5mPower" value="360" required /></td>
+              <td><input class="textfield_power" type="text" name="10mPower" value="315" required /></td>
+              <td><input class="textfield_power" type="text" name="20mPower" value="300" required /></td>
+              <td><input class="textfield_power" type="text" name="30mPower" value="285" required /></td>
+              <td><input class="textfield_power" type="text" name="60mPower" value="255" required /></td>
             </tr>
           </table><br>
         <input type="submit" class=btn value="Optimize!">
   </form>
   <div id=output>
     <div id=console>
-      <textarea name=console id=console style='height:420px; width:793px; background:#FFC; resize:both; min-height:200px; min-width:200px;'>{{ console }}</textarea>
+      <textarea name=console id=console style='height:420px; width:793px; background:#FFC; resize:both; min-height:200px; min-width:200px; text-align:center'>{{ console }}</textarea>
     </div>
   </div>
 </center>
