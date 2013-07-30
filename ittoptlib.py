@@ -1,6 +1,5 @@
 from numpy.linalg import norm
 import numpy
-import scipy.optimize
 from math import sin, cos, atan2, sqrt, radians, degrees, pi, atan
 
 radius = 6378137
@@ -65,10 +64,33 @@ class CourseSeg(object):
     average_vel = speedAtFixedPower(model, power, grade, wind_alpha)
     return self.total_distance / average_vel
 
+def newtonRaphson(func, x0, tol=1.48e-13, maxiters=50):
+  p0 = x0
+  if x0 >= 0:
+    p1 = x0*(1 + 1e-6) + 1e-6
+  else:
+    p1 = x0*(1 + 1e-6) - 1e-6
+  q0 = func(p0)
+  q1 = func(p1)
+  for it in range(maxiters):
+    if q1 == q0:
+      if p1 != p0:
+        print "Tolerance reached on root finding!"
+      return (p1 + p0)/2.0
+    else:
+      p = p1 - q1*(p1 - p0)/(q1 - q0)
+    if abs(p - p1) < tol:
+      return p
+    p0 = p1
+    q0 = q1
+    p1 = p
+    q1 = func(p1)
+  raise ValueError("Rootfinding did not converge")
+
 def speedAtFixedPower(model, power, grade, alpha):
   def f(u):
     return power - powerAtFixedSpeed(model, u, grade, alpha)
-  return scipy.optimize.brentq(f, 0.1, 25)
+  return newtonRaphson(f, 25)
 
 def powerAtFixedSpeed(model, speed, grade, alpha):
   hill_angle = atan(grade)
