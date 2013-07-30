@@ -3,7 +3,7 @@ import os
 import math
 import ittoptlib
 import requests
-DEBUG = True
+DEBUG = False
 
 app = Flask(__name__)
 app.config.from_object(__name__)
