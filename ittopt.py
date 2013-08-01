@@ -42,7 +42,7 @@ def optimize():
     except ValueError:
       # Catch issues with parameterization
       model_params["resolution"] += 5
-  return render_template('index.html', console="Optimal power of %d watts yields time of %.2f seconds (%d:%02d minutes).\nThe course is %f m long, which yields an average speed of %.2f m/s (%.2f km/h)." % (power, time, time/60, time%60, dist, 1.0*dist/time, 3.6*dist/time))
+  return render_template('index.html', console="Optimal power of %d watts yields time of %.2f seconds (%d:%02d minutes).\nThe course is %.2f m long, which yields an average speed of %.2f m/s (%.2f km/h)." % (power, time, time/60, time%60, dist, 1.0*dist/time, 3.6*dist/time))
   # Catch issues with parameterization
 
 def ParseCourseKML(url):
