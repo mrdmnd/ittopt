@@ -206,7 +206,7 @@ def buildSegments(compressed_indices, course_data, model):
 
 def perpendicularDist(p, p1, p2):
   lineseg =   p2.point - p1.point
-  resultant = p.point - p1.point
+  resultant =  p.point - p1.point
   return norm(numpy.cross(lineseg, resultant)) / norm(lineseg)
 
 def lla2ecef(llaPoint):
