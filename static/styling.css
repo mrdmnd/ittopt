@@ -224,3 +224,11 @@ input.lightbtn {
         margin: auto;
         text-align: center;
 }
+
+html {
+  background: url(dz_tt.jpg) no-repeat center center fixed;
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
+}
