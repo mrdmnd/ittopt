@@ -1,1 +1,1 @@
-web: gunicorn ittopt:app
+web: newrelic-admin run-program gunicorn ittopt:app

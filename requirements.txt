@@ -7,3 +7,4 @@ itsdangerous==0.22
 numpy==1.7.0
 requests==1.2.3
 wsgiref==0.1.2
+newrelic
