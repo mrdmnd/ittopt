@@ -2,62 +2,67 @@
 {% block body %}
 <body>
   <center>
+  <h1><span>TTOpt - A Time Trial optimization engine for constant pacing</span></h1>
   <form action="{{ url_for('optimize') }}" method="post">
-  <h2>Input Parameters</h2>
-    <div id="mandatory_params">
+    <h2><span>Input Parameters</span></h2>
       <table> 
         <tr>
-          <td>RideWithGPS Segment URL:</td>
-          <td><input id="rideurl" class="textfield" type="text" name="rideurl" placeholder="e.g. ridewithgps.com/routes/2800836" required /></td>
-        </tr>
-        <tr>
-          <td>Total weight (kg):</td>
-          <td><input class="textfield" type="text" name="weight" placeholder="Combined weight of rider and all equipment (kg)" required /></td>
-        </tr>
-        <tr>
-          <td>Frontal CdA (m^2):</td>
-          <td><input class="textfield" type="text" name="cda" placeholder="Reasonable values between 0.1 and 0.4" required /></td>
-        </tr>
-        <tr>
-          <td>Wind direction (radians):</td>
-          <td><input class="textfield" type="text" name="winddirection" placeholder="N is 0 degrees, E is 0.5*Pi, S is Pi, W is 1.5*Pi" required /></td>
-        </tr>
-        <tr>
-          <td>Wind velocity (m/s):</td>
-          <td><input class="textfield" type="text" name="windvelocity" placeholder="Reasonable values around 0-6 m/s" required /></td>
+          <td title="The URL pointing to the segment to optimize against.">RideWithGPS Segment URL</td>
+          <td><input id="rideurl" class="textfield_rideurl" type="text" name="rideurl" {{ rideurl_value_attr }} placeholder="e.g. ridewithgps.com/routes/2831848 for OLH" required /></td>
         </tr>
       </table>
-    </div>
-    <a id="toggle_optional" href="javascript:void(0);">Toggle Advanced Parameters</a><br>
+      <img id="map_img" style="max-height:450px;" src="">
+      <br>
+      <img id="elev_img" style="max-width:450px;" src="">
+      <table>
+        <tr>
+          <td title="Combined weight of rider and all equipment (kg)">Total weight (kg)</td>
+          <td><input class="textfield" type="text" name="weight" {{ weight_value_attr }} placeholder="88.0" required /></td>
+        </tr>
+        <tr>
+          <td title="Coefficient of Drag times Frontal Area. For most cylists, this value will be between 0.200 and 0.400">Frontal CdA (m^2)</td>
+          <td><input class="textfield" type="text" name="cda" {{ cda_value_attr }} placeholder="0.280" required /></td>
+        </tr>
+        <tr>
+          <td title="Direction of the wind. N corresponds to 0 degrees, E is 90, S is 180, W is 270.">Wind direction (degrees)</td>
+          <td><input class="textfield" type="text" name="winddirection" {{ winddirection_value_attr }} placeholder="90" required /></td>
+        </tr>
+        <tr>
+          <td title="Velocity of the wind. Typical values are going to be around 0.0 to 6.0 m/s">Wind velocity (m/s)</td>
+          <td><input class="textfield" type="text" name="windvelocity" {{ windvelocity_value_attr }} placeholder="1.5" required /></td>
+        </tr>
+      </table>
+    <button type="button" id="toggle_optional" title="Enable advanced weather parameters.">Toggle Advanced Parameters</button><br>
     <div id="advanced_params">
       <table>
         <tr>
-          <td>CRR (unitless):</td>
-          <td><input class="textfield" type="text" name="crr" value="0.004" placeholder="Reasonable values between 0.003 and 0.006" required /></td>
+          <td title="Coefficient of rolling resistance. This is a function of the road surface and your tires. Reasonable values are going to be between 0.004 and 0.008.">CRR (unitless)</td>
+          <td><input class="textfield" type="text" name="crr" value="0.005" required /></td>
         </tr>
         <tr>
-          <td>Temperature (celsius):</td>
-          <td><input class="textfield" type="text" name="temp" value="25" placeholder="Room temperature is about 25 deg celsius." required /></td>
+          <td title="Room temperature is about 25 deg celsius.">Temperature (celsius)</td>
+          <td><input class="textfield" type="text" name="temp" value="25" required /></td>
         </tr>
         <tr>
-          <td>Dewpoint (celsius):</td>
-          <td><input class="textfield" type="text" name="dewpoint" value="8.5" placeholder="Look this up in a weather report." required /></td>
+          <td title="The dewpoint is the temperature at which water vapor condenses into liquid water at the same rate at which it evaporates. Look this up in a weather report.">Dewpoint (celsius)</td>
+          <td><input class="textfield" type="text" name="dewpoint" value="8.5" required /></td>
         </tr>
         <tr>
-          <td>Air pressure (pascals):</td>
-          <td><input class="textfield" type="text" name="pressure" value="101800" placeholder="One atmosphere is 101,800 Pascals, decreasing with altitude." required /></td>
+          <td title="The air pressure (measured here in Pascals) is used to compute the air density. One atmosphere is 101,800 Pascals, decreasing with altitude.">Air pressure (pascals)</td>
+          <td><input class="textfield" type="text" name="pressure" value="101800" required /></td>
         </tr>
         <tr>
-          <td>Ramer-Douglas Compression Threshold (m)</td>
-          <td><input class="textfield" type="text" name="resolution" value="35" placeholder="Threshold for internal point elision." required /></td>
+          <td title="An internal parameter used to control the granularity of the segment model. Larger values here will result in reduced precision but may be required to avoid outlier data points.">Decimation Threshold (m)</td>
+          <td><input class="textfield" type="text" name="resolution" value="35" required /></td>
         </tr>
       </table><br>
     </div>
-    <h2>Critical Power (watts)<br>
+    <br>
+    <h2><span title="The maximum amount of power you can produce for each given interval. The optimizer will interpolate linearly between these points. We treat durations inside of 1m and outside of 60m as 1m, and 60m, respectively.">Critical Power</span></h2>
           <table>
             <tr>
-              <td align=center>30s</td>
               <td align=center>1m</td>
+              <td align=center>3m</td>
               <td align=center>5m</td>
               <td align=center>10m</td>
               <td align=center>20m</td>
@@ -65,26 +70,20 @@
               <td align=center>60m</td>
             </tr>
             <tr>
-              <td><input class="textfield_power" type="text" name="30sPower" value="800" required /></td>
-              <td><input class="textfield_power" type="text" name="1mPower" value="550" required /></td>
-              <td><input class="textfield_power" type="text" name="5mPower" value="360" required /></td>
-              <td><input class="textfield_power" type="text" name="10mPower" value="315" required /></td>
-              <td><input class="textfield_power" type="text" name="20mPower" value="300" required /></td>
-              <td><input class="textfield_power" type="text" name="30mPower" value="285" required /></td>
-              <td><input class="textfield_power" type="text" name="60mPower" value="255" required /></td>
+              <td><input class="textfield_power" type="text" name="1mPower" {{power60}} placeholder="563" required /></td>
+              <td><input class="textfield_power" type="text" name="3mPower" {{power180}} placeholder="402" required /></td>
+              <td><input class="textfield_power" type="text" name="5mPower" {{power300}} placeholder="363" required /></td>
+              <td><input class="textfield_power" type="text" name="10mPower" {{power600}} placeholder="320" required /></td>
+              <td><input class="textfield_power" type="text" name="20mPower" {{power1200}} placeholder="303" required /></td>
+              <td><input class="textfield_power" type="text" name="30mPower" {{power1800}} placeholder="299" required /></td>
+              <td><input class="textfield_power" type="text" name="60mPower" {{power3600}} placeholder="275" required /></td>
             </tr>
           </table><br>
-        <input type="submit" class=btn value="Optimize!">
+        <input type="submit" class=largebtn value="Optimize!">
   </form>
   <div id="output">
-    <div id="map">
-      <img id="map_img" src="">
-    </div>
-    <div id="elevation">
-      <img id="elev_img" src="">
-    </div>
     <div id="console">
-      <textarea name="console" id="console" style='height:420px; width:793px; background:#FFC; resize:both; min-height:200px; min-width:200px; text-align:center'>{{ console }}</textarea>
+      <textarea name="console" id="console">{{ console }}</textarea>
     </div>
   </div>
 </center>

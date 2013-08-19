@@ -1,5 +1,4 @@
-from flask import Flask, request, url_for, render_template
-import os
+from flask import Flask, request, render_template
 import math
 import ittoptlib
 import requests
@@ -22,17 +21,18 @@ def optimize():
     model_params["cda"]  = float(request.form["cda"])
     model_params["crr"] = float(request.form["crr"])
     model_params["rho"] = ittoptlib.airDensity(float(request.form["temp"]), float(request.form["pressure"]), float(request.form["dewpoint"]))
-    model_params["wind_direction"] = float(request.form["winddirection"])
+    model_params["wind_direction"] = math.radians(float(request.form["winddirection"]))
     model_params["wind_velocity"] = float(request.form["windvelocity"])
     model_params["power"] = {}
-    model_params["power"][30] = float(request.form["30sPower"])
     model_params["power"][60] = float(request.form["1mPower"])
+    model_params["power"][180] = float(request.form["3mPower"])
     model_params["power"][300] = float(request.form["5mPower"])
     model_params["power"][600] = float(request.form["10mPower"])
     model_params["power"][1200] = float(request.form["20mPower"])
+    model_params["power"][1800] = float(request.form["30mPower"])
     model_params["power"][3600] = float(request.form["60mPower"])
   except ValueError:
-    return render_template('index.html', console="Try using numerical values, silly.")
+    return render_template('index.html', console="Error with some of your inputs. Please sanity check values.")
   # The meat of the engine.
   course_data = ParseCourseKML(url)
   while True:
@@ -42,7 +42,20 @@ def optimize():
     except ValueError:
       # Catch issues with parameterization
       model_params["resolution"] += 5
-  return render_template('index.html', console="Optimal power of %d watts yields time of %.2f seconds (%d:%02d minutes).\nThe course is %.2f m long, which yields an average speed of %.2f m/s (%.2f km/h)." % (power, time, time/60, time%60, dist, 1.0*dist/time, 3.6*dist/time))
+  return render_template('index.html', 
+                         rideurl_value_attr='value=%s' % url, 
+                         weight_value_attr='value=%.1f' % model_params["weight"],
+                         cda_value_attr='value=%.3f' % model_params["cda"],
+                         winddirection_value_attr='value=%.5f' % model_params["wind_direction"],
+                         windvelocity_value_attr='value=%.2f' % model_params["wind_velocity"],
+                         power60='value=%d' % model_params["power"][60],
+                         power180='value=%d' % model_params["power"][180],
+                         power300='value=%d' % model_params["power"][300],
+                         power600='value=%d' % model_params["power"][600],
+                         power1200='value=%d' % model_params["power"][1200],
+                         power1800='value=%d' % model_params["power"][1800],
+                         power3600='value=%d' % model_params["power"][3600],
+                         console="Optimal power of %d watts yields time of %.2f seconds (%d:%02d minutes).\nThe course is %.2f m long, which yields an average speed of %.2f m/s (%.2f km/h)." % (power, time, time/60, time%60, dist, 1.0*dist/time, 3.6*dist/time))
   # Catch issues with parameterization
 
 def ParseCourseKML(url):
