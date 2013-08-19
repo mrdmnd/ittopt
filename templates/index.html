@@ -2,22 +2,35 @@
 {% block body %}
 <body>
   <center>
-  <font color=grey>Burn your watts optimally to minimize that ITT time and grab the KOM!</font>
   <form action="{{ url_for('optimize') }}" method="post">
-    <font color=#e05422>Environment</font><br>
-    <table>
+  <h2>Input Parameters</h2>
+    <div id="mandatory_params">
+      <table> 
         <tr>
           <td>RideWithGPS Segment URL:</td>
-          <td><input class="textfield" type="text" name="rideurl" value="ridewithgps.com/routes/2800836" placeholder="e.g. ridewithgps.com/routes/2800836" required /></td>
+          <td><input id="rideurl" class="textfield" type="text" name="rideurl" placeholder="e.g. ridewithgps.com/routes/2800836" required /></td>
         </tr>
         <tr>
           <td>Total weight (kg):</td>
-          <td><input class="textfield" type="text" name="weight" value="88.0" placeholder="Combined weight of rider and all equipment (kg)" required /></td>
+          <td><input class="textfield" type="text" name="weight" placeholder="Combined weight of rider and all equipment (kg)" required /></td>
         </tr>
         <tr>
           <td>Frontal CdA (m^2):</td>
-          <td><input class="textfield" type="text" name="cda" value="0.270" placeholder="Reasonable values between 0.1 and 0.4" required /></td>
+          <td><input class="textfield" type="text" name="cda" placeholder="Reasonable values between 0.1 and 0.4" required /></td>
         </tr>
+        <tr>
+          <td>Wind direction (radians):</td>
+          <td><input class="textfield" type="text" name="winddirection" placeholder="N is 0 degrees, E is 0.5*Pi, S is Pi, W is 1.5*Pi" required /></td>
+        </tr>
+        <tr>
+          <td>Wind velocity (m/s):</td>
+          <td><input class="textfield" type="text" name="windvelocity" placeholder="Reasonable values around 0-6 m/s" required /></td>
+        </tr>
+      </table>
+    </div>
+    <a id="toggle_optional" href="javascript:void(0);">Toggle Advanced Parameters</a><br>
+    <div id="advanced_params">
+      <table>
         <tr>
           <td>CRR (unitless):</td>
           <td><input class="textfield" type="text" name="crr" value="0.004" placeholder="Reasonable values between 0.003 and 0.006" required /></td>
@@ -35,20 +48,12 @@
           <td><input class="textfield" type="text" name="pressure" value="101800" placeholder="One atmosphere is 101,800 Pascals, decreasing with altitude." required /></td>
         </tr>
         <tr>
-          <td>Wind direction (radians):</td>
-          <td><input class="textfield" type="text" name="winddirection" value="0" placeholder="N is 0 degrees, E is 0.5*Pi, S is Pi, W is 1.5*Pi" required /></td>
-        </tr>
-        <tr>
-          <td>Wind velocity (m/s):</td>
-          <td><input class="textfield" type="text" name="windvelocity" value="0" placeholder="Reasonable values around 0-6 m/s" required /></td>
-        </tr>
-        <tr>
           <td>Ramer-Douglas Compression Threshold (m)</td>
-          <td><input class="range" name="resolution" min="25" max="50" step="1" value="35" placeholder="Threshold for point elision." required /></td>
+          <td><input class="textfield" type="text" name="resolution" value="35" placeholder="Threshold for internal point elision." required /></td>
         </tr>
-    </table><br>
-    <font color=#e05422>Critical Power (watts)</font><br>
-    This represents the maximum power you can output for each duration. We interpolate linearly between measured durations.
+      </table><br>
+    </div>
+    <h2>Critical Power (watts)<br>
           <table>
             <tr>
               <td align=center>30s</td>
@@ -71,11 +76,15 @@
           </table><br>
         <input type="submit" class=btn value="Optimize!">
   </form>
-  <div id=output>
-    <div id=console>
-      <textarea name=console id=console style='height:420px; width:793px; background:#FFC; resize:both; min-height:200px; min-width:200px; text-align:center'>{{ console }}</textarea>
+  <div id="output">
+    <div id="map">
+      <img id="map_img" src="">
     </div>
-    <div id=map>
+    <div id="elevation">
+      <img id="elev_img" src="">
+    </div>
+    <div id="console">
+      <textarea name="console" id="console" style='height:420px; width:793px; background:#FFC; resize:both; min-height:200px; min-width:200px; text-align:center'>{{ console }}</textarea>
     </div>
   </div>
 </center>

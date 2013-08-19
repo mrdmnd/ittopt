@@ -1,19 +1,19 @@
 table { 
-	font: 80% Verdana, Arial, Helvetica, sans-serif;
-	color: rgba(220,220,220,1.0);
-	text-align: left;
-	border-collapse: collapse;
-	border: 1px solid #666666;
+  font: 80% Verdana, Arial, Helvetica, sans-serif;
+  color: rgba(220,220,220,1.0);
+  text-align: left;
+  border-collapse: collapse;
+  border: 1px solid #666666;
 }
 tr.odd {
-	background-color: rgba(100,100,100,0.85);
+  background-color: rgba(100,100,100,0.85);
 }
 tr {
   background-color: rgba(120,120,120,0.85);
-	vertical-align: top;
+  vertical-align: top;
 }
 td {
-        border-left: 0px solid #dadada;
+  border-left: 0px solid #dadada;
 }
 
 .textfield {
@@ -27,9 +27,9 @@ td {
   text-align: center;
 }
 
-#map {
-  width: 600px;
-  height: 400px; 
+h2 {
+  font: 80% Verdana, Arial, Helvetica;
+  color: #e68a2e
 }
 
 html {
