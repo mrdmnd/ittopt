@@ -16,6 +16,22 @@ td {
         border-left: 0px solid #dadada;
 }
 
+.textfield {
+  width: 300px;
+  margin: auto;
+}
+
+.textfield_power {
+  width: 50px;
+  margin: auto;
+  text-align: center;
+}
+
+#map {
+  width: 600px;
+  height: 400px; 
+}
+
 html {
   background: url(dz_tt.jpg) no-repeat center center fixed;
   -webkit-background-size: cover;
