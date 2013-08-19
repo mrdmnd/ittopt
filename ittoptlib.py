@@ -193,7 +193,7 @@ def buildSegments(compressed_indices, course_data, model):
   for j in range(0, len(compressed_indices)-1):
     first_ind = compressed_indices[j]
     second_ind = compressed_indices[j+1]
-
+    # TODO: first_ind can be out of range in course_data if it's empty somehow
     p1 = course_data[first_ind]
     p2 = course_data[second_ind]
     # TODO: decide if we want to use flat distance here instead
