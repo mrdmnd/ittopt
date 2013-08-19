@@ -9,7 +9,19 @@ app.config.from_object(__name__)
 
 @app.route('/')
 def show_mainpage():
-  return render_template('index.html') 
+  return render_template('index.html',
+                          rideurl_value_attr='value=ridewithgps.com/routes/2831848',
+                          weight_value_attr='value=88.0',
+                          cda_value_attr='value=0.290',
+                          winddirection_value_attr='value=90',
+                          windvelocity_value_attr='value=1.5',
+                          power60='value=563',
+                          power180='value=402',
+                          power300='value=363',
+                          power600='value=320',
+                          power1200='value=303',
+                          power1800='value=299',
+                          power3600='value=275')
 
 @app.route('/optimize', methods=['POST'])
 def optimize():
