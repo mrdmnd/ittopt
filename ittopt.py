@@ -46,7 +46,7 @@ def optimize():
                          rideurl_value_attr='value=%s' % url, 
                          weight_value_attr='value=%.1f' % model_params["weight"],
                          cda_value_attr='value=%.3f' % model_params["cda"],
-                         winddirection_value_attr='value=%.5f' % model_params["wind_direction"],
+                         winddirection_value_attr='value=%.5f' % math.degrees(model_params["wind_direction"]),
                          windvelocity_value_attr='value=%.2f' % model_params["wind_velocity"],
                          power60='value=%d' % model_params["power"][60],
                          power180='value=%d' % model_params["power"][180],
