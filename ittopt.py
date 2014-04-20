@@ -4,13 +4,12 @@ import ittoptlib
 import requests
 DEBUG = True
 
-#Sam was here
-
 app = Flask(__name__)
 app.config.from_object(__name__)
 
 @app.route('/')
-def show_mainpage():
+@app.route('/index')
+def index():
   return render_template('index.html',
                           rideurl_value_attr='value=ridewithgps.com/routes/2831848',
                           weight_value_attr='value=88.0',
@@ -56,7 +55,7 @@ def optimize():
     except ValueError:
       # Catch issues with parameterization
       model_params["resolution"] += 5
-  return render_template('index.html', 
+  return redirect(url_for('index',
                          rideurl_value_attr='value=%s' % url, 
                          weight_value_attr='value=%.1f' % model_params["weight"],
                          cda_value_attr='value=%.3f' % model_params["cda"],
@@ -69,7 +68,7 @@ def optimize():
                          power1200='value=%d' % model_params["power"][1200],
                          power1800='value=%d' % model_params["power"][1800],
                          power3600='value=%d' % model_params["power"][3600],
-                         console="Optimal power of %d watts yields time of %.2f seconds (%d:%02d minutes).\nThe course is %.2f m long, which yields an average speed of %.2f m/s (%.2f km/h)." % (power, time, time/60, time%60, dist, 1.0*dist/time, 3.6*dist/time))
+                         console="Optimal power of %d watts yields time of %.2f seconds (%d:%02d minutes).\nThe course is %.2f m long, which yields an average speed of %.2f m/s (%.2f km/h)." % (power, time, time/60, time%60, dist, 1.0*dist/time, 3.6*dist/time)))
   # Catch issues with parameterization
 
 def ParseCourseKML(url):
@@ -107,4 +106,3 @@ def RunExperiment(course_data, model):
 
 if __name__ == '__main__':
   app.run(debug=DEBUG)
-
