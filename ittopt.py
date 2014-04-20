@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, redirect, url_for
 import math
 import ittoptlib
 import requests
@@ -7,22 +7,27 @@ DEBUG = True
 app = Flask(__name__)
 app.config.from_object(__name__)
 
+defaults = {
+  'rideurl': 'ridewithgps.com/routes/2831848',
+  'weight':'88.0',
+  'cda':'0.290',
+  'winddirection':'90',
+  'windvelocity':'1.5',
+  'power60':'563',
+  'power180':'402',
+  'power300':'363',
+  'power600':'320',
+  'power1200':'303',
+  'power1800':'299',
+  'power3600':'275'
+}
+
+values = defaults
+
 @app.route('/')
 @app.route('/index')
 def index():
-  return render_template('index.html',
-                          rideurl_value_attr='value=ridewithgps.com/routes/2831848',
-                          weight_value_attr='value=88.0',
-                          cda_value_attr='value=0.290',
-                          winddirection_value_attr='value=90',
-                          windvelocity_value_attr='value=1.5',
-                          power60='value=563',
-                          power180='value=402',
-                          power300='value=363',
-                          power600='value=320',
-                          power1200='value=303',
-                          power1800='value=299',
-                          power3600='value=275')
+  return render_template('index.html')
 
 @app.route('/optimize', methods=['POST'])
 def optimize():
@@ -45,7 +50,10 @@ def optimize():
     model_params["power"][1800] = float(request.form["30mPower"])
     model_params["power"][3600] = float(request.form["60mPower"])
   except ValueError:
-    return render_template('index.html', console="Error with some of your inputs. Please sanity check values.")
+    return render_template('index.html', 
+      values=values,
+      console="Error with some of your inputs. Please sanity check values.")
+
   # The meat of the engine.
   course_data = ParseCourseKML(url)
   while True:
@@ -53,7 +61,7 @@ def optimize():
       power, time, dist = RunExperiment(course_data, model_params)
       break
     except ValueError:
-      # Catch issues with parameterization
+      #Try a lower resolution
       model_params["resolution"] += 5
   return redirect(url_for('index',
                          rideurl_value_attr='value=%s' % url, 

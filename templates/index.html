@@ -2,13 +2,13 @@
 {% block body %}
 <body>
   <center>
-  <h1><span>TTOpt - A Time Trial optimization engine for constant pacing</span></h1>
-  <form action="{{ url_for('optimize') }}" method="post">
-    <h2><span>Input Parameters</span></h2>
+  <h1>TTOpt - A Time Trial optimization engine for constant pacing</h1>
+  <form action="{{ url_for('optimize') }}" method="POST">
+    <h2>Input Parameters</h2>
       <table> 
         <tr>
           <td title="The URL pointing to the segment to optimize against.">RideWithGPS Segment URL</td>
-          <td><input id="rideurl" class="textfield_rideurl" type="text" name="rideurl" {{ rideurl_value_attr }} placeholder="e.g. ridewithgps.com/routes/2831848 for OLH" required /></td>
+          <td><input id="rideurl" class="textfield_rideurl" type="text" name="rideurl" value="{{ ride_url if ride_url else 'ridewithgps.com/routes/2831848'}}" placeholder="e.g. ridewithgps.com/routes/2831848 for OLH" required /></td>
         </tr>
       </table>
       <img id="map_img" style="max-height:450px;" src="">
@@ -17,19 +17,19 @@
       <table>
         <tr>
           <td title="Combined weight of rider and all equipment (kg)">Total weight (kg)</td>
-          <td><input class="textfield" type="text" name="weight" {{ weight_value_attr }} placeholder="88.0" required /></td>
+          <td><input class="textfield" type="text" name="weight" value="{{ weight if weight else '88.0' }}" placeholder="88.0" required /></td>
         </tr>
         <tr>
           <td title="Coefficient of Drag times Frontal Area. For most cylists, this value will be between 0.200 and 0.400">Frontal CdA (m^2)</td>
-          <td><input class="textfield" type="text" name="cda" {{ cda_value_attr }} placeholder="0.280" required /></td>
+          <td><input class="textfield" type="text" name="cda" value="{{ cda if cda else '0.280' }}"  placeholder="0.280" required /></td>
         </tr>
         <tr>
           <td title="Direction of the wind. N corresponds to 0 degrees, E is 90, S is 180, W is 270.">Wind direction (degrees)</td>
-          <td><input class="textfield" type="text" name="winddirection" {{ winddirection_value_attr }} placeholder="90" required /></td>
+          <td><input class="textfield" type="text" name="winddirection" value="{{ winddirection if winddirection else '90' }}" placeholder="90" required /></td>
         </tr>
         <tr>
           <td title="Velocity of the wind. Typical values are going to be around 0.0 to 6.0 m/s">Wind velocity (m/s)</td>
-          <td><input class="textfield" type="text" name="windvelocity" {{ windvelocity_value_attr }} placeholder="1.5" required /></td>
+          <td><input class="textfield" type="text" name="windvelocity" value="{{ windvelocity if windvelocity else '1.5' }}" placeholder="1.5" required /></td>
         </tr>
       </table>
     <button type="button" id="toggle_optional" title="Enable advanced weather parameters.">Toggle Advanced Parameters</button><br>
@@ -70,13 +70,13 @@
               <td align=center>60m</td>
             </tr>
             <tr>
-              <td><input class="textfield_power" type="text" name="1mPower" {{power60}} placeholder="563" required /></td>
-              <td><input class="textfield_power" type="text" name="3mPower" {{power180}} placeholder="402" required /></td>
-              <td><input class="textfield_power" type="text" name="5mPower" {{power300}} placeholder="363" required /></td>
-              <td><input class="textfield_power" type="text" name="10mPower" {{power600}} placeholder="320" required /></td>
-              <td><input class="textfield_power" type="text" name="20mPower" {{power1200}} placeholder="303" required /></td>
-              <td><input class="textfield_power" type="text" name="30mPower" {{power1800}} placeholder="299" required /></td>
-              <td><input class="textfield_power" type="text" name="60mPower" {{power3600}} placeholder="275" required /></td>
+              <td><input class="textfield_power" type="text" name="1mPower" value="{{ power60 if power60 else 563 }}" placeholder="563" required /></td>
+              <td><input class="textfield_power" type="text" name="3mPower" value="{{ power180 if power180 else 402 }}" placeholder="402" required /></td>
+              <td><input class="textfield_power" type="text" name="5mPower" value="{{ power300 if power300 else 363 }}" placeholder="363" required /></td>
+              <td><input class="textfield_power" type="text" name="10mPower" value="{{ power600 if power600 else 320 }}" placeholder="320" required /></td>
+              <td><input class="textfield_power" type="text" name="20mPower" value="{{ power1200 if power1200 else 303 }}" placeholder="303" required /></td>
+              <td><input class="textfield_power" type="text" name="30mPower" value="{{ power1800 if power1800 else 299 }}" placeholder="299" required /></td>
+              <td><input class="textfield_power" type="text" name="60mPower" value="{{ power3600 if power3600 else 275 }}" placeholder="275" required /></td>
             </tr>
           </table><br>
         <input type="submit" class=largebtn value="Optimize!">
