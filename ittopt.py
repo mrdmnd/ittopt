@@ -1,4 +1,5 @@
-from flask import Flask, request, render_template, redirect, url_for
+from flask import Flask, request, render_template, redirect, url_for, session, flash
+import os
 import math
 import ittoptlib
 import requests
@@ -6,23 +7,42 @@ DEBUG = True
 
 app = Flask(__name__)
 app.config.from_object(__name__)
+app.secret_key = os.urandom(24)
 
+#Set defaults
 defaults = {
   'rideurl': 'ridewithgps.com/routes/2831848',
   'weight':'88.0',
   'cda':'0.290',
-  'winddirection':'90',
-  'windvelocity':'1.5',
-  'power60':'563',
-  'power180':'402',
-  'power300':'363',
-  'power600':'320',
-  'power1200':'303',
-  'power1800':'299',
-  'power3600':'275'
+  'wind-direction':'90',
+  'wind-velocity':'1.5',
+  '1mPower':'563',
+  '3mPower':'402',
+  '5mPower':'363',
+  '10mPower':'320',
+  '20mPower':'303',
+  '30mPower':'299',
+  '60mPower':'275'
 }
 
-values = defaults
+form_model_names = {
+  'resolution':'resolution',
+  'weight':'weight',
+  'cda':'cda',
+  'crr':'crr',
+  'wind-direction':'wind_direction',
+  'wind-velocity':'wind_velocity'
+}
+
+form_power_names = {
+  '1mPower':60,
+  '3mPower':180,
+  '5mPower':300,
+  '10mPower':600,
+  '20mPower':1200,
+  '30mPower':1800,
+  '60mPower':3600,
+}
 
 @app.route('/')
 @app.route('/index')
@@ -34,25 +54,29 @@ def optimize():
   try:
     url = request.form["rideurl"]
     model_params = {}
-    model_params["resolution"] = float(request.form["resolution"])
-    model_params["weight"] = float(request.form["weight"])
-    model_params["cda"]  = float(request.form["cda"])
-    model_params["crr"] = float(request.form["crr"])
-    model_params["rho"] = ittoptlib.airDensity(float(request.form["temp"]), float(request.form["pressure"]), float(request.form["dewpoint"]))
-    model_params["wind_direction"] = math.radians(float(request.form["winddirection"]))
-    model_params["wind_velocity"] = float(request.form["windvelocity"])
-    model_params["power"] = {}
-    model_params["power"][60] = float(request.form["1mPower"])
-    model_params["power"][180] = float(request.form["3mPower"])
-    model_params["power"][300] = float(request.form["5mPower"])
-    model_params["power"][600] = float(request.form["10mPower"])
-    model_params["power"][1200] = float(request.form["20mPower"])
-    model_params["power"][1800] = float(request.form["30mPower"])
-    model_params["power"][3600] = float(request.form["60mPower"])
+    
+    #Map the form values into our model params
+    for form_name, param_name in form_model_names.iteritems():
+      value = float(request.form[form_name])
+      session[form_name] = value
+      model_params[param_name] = value
+
+    #Fix some math
+    model_params['wind_direction'] = math.radians(model_params['wind_direction'])
+    temp, pressure, dew = float(request.form['temp']), float(request.form['pressure']), float(request.form['dewpoint'])
+    model_params['rho'] = ittoptlib.airDensity(temp, pressure, dew)
+    session['temp'], session['pressure'], session['dewpoint'] = temp, pressure, dew
+    
+    #Map the power values into the parameters package
+    model_params['power'] = {}
+    for form_name, power in form_power_names.iteritems():
+      value = float(request.form[form_name])
+      model_params['power'][power] = value
+      session[form_name] = value
+
   except ValueError:
-    return render_template('index.html', 
-      values=values,
-      console="Error with some of your inputs. Please sanity check values.")
+    flash('Error with some of your inputs. Please sanity check values.')
+    return redirect(url_for('index'))
 
   # The meat of the engine.
   course_data = ParseCourseKML(url)
@@ -63,21 +87,8 @@ def optimize():
     except ValueError:
       #Try a lower resolution
       model_params["resolution"] += 5
-  return redirect(url_for('index',
-                         rideurl_value_attr='value=%s' % url, 
-                         weight_value_attr='value=%.1f' % model_params["weight"],
-                         cda_value_attr='value=%.3f' % model_params["cda"],
-                         winddirection_value_attr='value=%.5f' % math.degrees(model_params["wind_direction"]),
-                         windvelocity_value_attr='value=%.2f' % model_params["wind_velocity"],
-                         power60='value=%d' % model_params["power"][60],
-                         power180='value=%d' % model_params["power"][180],
-                         power300='value=%d' % model_params["power"][300],
-                         power600='value=%d' % model_params["power"][600],
-                         power1200='value=%d' % model_params["power"][1200],
-                         power1800='value=%d' % model_params["power"][1800],
-                         power3600='value=%d' % model_params["power"][3600],
-                         console="Optimal power of %d watts yields time of %.2f seconds (%d:%02d minutes).\nThe course is %.2f m long, which yields an average speed of %.2f m/s (%.2f km/h)." % (power, time, time/60, time%60, dist, 1.0*dist/time, 3.6*dist/time)))
-  # Catch issues with parameterization
+  session['console'] = "Optimal power of %d watts yields time of %.2f seconds (%d:%02d minutes).\nThe course is %.2f m long, which yields an average speed of %.2f m/s (%.2f km/h)." % (power, time, time/60, time%60, dist, 1.0*dist/time, 3.6*dist/time)
+  return redirect(url_for('index'))
 
 def ParseCourseKML(url):
   if not url.startswith("http://"):

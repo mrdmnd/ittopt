@@ -39,7 +39,7 @@ td {
   text-align: center;
   color: #e68a2e;
 }
-input.largebtn {
+.largebtn {
   color: #fff;
   font-family: 'Inconsolata', sans-serif;
   font-size: 85%;
@@ -96,4 +96,10 @@ html {
   -moz-background-size: cover;
   -o-background-size: cover;
   background-size: cover;
+}
+#flashed-messages {
+  width: 50%;
+  margin: 0 auto 10px auto; /* Centered */
+  background-color: white;
+  padding: 10px 0;
 }

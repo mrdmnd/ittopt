@@ -3,87 +3,99 @@
 <body>
   <center>
   <h1>TTOpt - A Time Trial optimization engine for constant pacing</h1>
+  <!-- Flash Messages -->
+  {% with messages = get_flashed_messages() -%}
+  {% if messages -%}
+  <div id="flashed-messages">
+    {% for message in messages -%}
+    <strong>Heads Up!</strong> {{ message }}
+    {% endfor -%}
+  </div>
+  {% endif -%}
+  {% endwith -%}
+  <!-- End Message Flashing -->
+
   <form action="{{ url_for('optimize') }}" method="POST">
     <h2>Input Parameters</h2>
-      <table> 
-        <tr>
-          <td title="The URL pointing to the segment to optimize against.">RideWithGPS Segment URL</td>
-          <td><input id="rideurl" class="textfield_rideurl" type="text" name="rideurl" value="{{ ride_url if ride_url else 'ridewithgps.com/routes/2831848'}}" placeholder="e.g. ridewithgps.com/routes/2831848 for OLH" required /></td>
-        </tr>
-      </table>
-      <img id="map_img" style="max-height:450px;" src="">
-      <br>
-      <img id="elev_img" style="max-width:450px;" src="">
-      <table>
-        <tr>
-          <td title="Combined weight of rider and all equipment (kg)">Total weight (kg)</td>
-          <td><input class="textfield" type="text" name="weight" value="{{ weight if weight else '88.0' }}" placeholder="88.0" required /></td>
-        </tr>
-        <tr>
-          <td title="Coefficient of Drag times Frontal Area. For most cylists, this value will be between 0.200 and 0.400">Frontal CdA (m^2)</td>
-          <td><input class="textfield" type="text" name="cda" value="{{ cda if cda else '0.280' }}"  placeholder="0.280" required /></td>
-        </tr>
-        <tr>
-          <td title="Direction of the wind. N corresponds to 0 degrees, E is 90, S is 180, W is 270.">Wind direction (degrees)</td>
-          <td><input class="textfield" type="text" name="winddirection" value="{{ winddirection if winddirection else '90' }}" placeholder="90" required /></td>
-        </tr>
-        <tr>
-          <td title="Velocity of the wind. Typical values are going to be around 0.0 to 6.0 m/s">Wind velocity (m/s)</td>
-          <td><input class="textfield" type="text" name="windvelocity" value="{{ windvelocity if windvelocity else '1.5' }}" placeholder="1.5" required /></td>
-        </tr>
-      </table>
-    <button type="button" id="toggle_optional" title="Enable advanced weather parameters.">Toggle Advanced Parameters</button><br>
+    <table> 
+      <tr>
+        <td title="The URL pointing to the segment to optimize against.">RideWithGPS Segment URL</td>
+        <td><input id="rideurl" class="textfield_rideurl" type="text" name="rideurl" value="{{ session['ride_url'] if session['ride_url'] else 'ridewithgps.com/routes/2831848'}}" placeholder="e.g. ridewithgps.com/routes/2831848 for OLH" required /></td>
+      </tr>
+    </table>
+    <img id="map_img" style="max-height:450px;" src=""><br />
+    <img id="elev_img" style="max-width:450px;" src="">
+    <table>
+      <tr>
+        <td title="Combined weight of rider and all equipment (kg)">Total weight (kg)</td>
+        <td><input class="textfield" type="text" name="weight" value="{{ session['weight'] if session['weight'] else '88.0' }}" placeholder="88.0" required /></td>
+      </tr>
+      <tr>
+        <td title="Coefficient of Drag times Frontal Area. For most cylists, this value will be between 0.200 and 0.400">Frontal CdA (m^2)</td>
+        <td><input class="textfield" type="text" name="cda" value="{{ session['cda'] if session['cda'] else '0.280' }}"  placeholder="0.280" required /></td>
+      </tr>
+      <tr>
+        <td title="Direction of the wind. N corresponds to 0 degrees, E is 90, S is 180, W is 270.">Wind direction (degrees)</td>
+        <td><input class="textfield" type="text" name="wind-direction" value="{{ session['wind-direction'] if session['wind-direction'] else '90' }}" placeholder="90" required /></td>
+      </tr>
+      <tr>
+        <td title="Velocity of the wind. Typical values are going to be around 0.0 to 6.0 m/s">Wind velocity (m/s)</td>
+        <td><input class="textfield" type="text" name="wind-velocity" value="{{ session['wind-velocity'] if session['wind-velocity'] else '1.5' }}" placeholder="1.5" required /></td>
+      </tr>
+    </table>
+    <button type="button" id="toggle_optional" title="Enable advanced weather parameters.">Toggle Advanced Parameters</button>
     <div id="advanced_params">
       <table>
         <tr>
           <td title="Coefficient of rolling resistance. This is a function of the road surface and your tires. Reasonable values are going to be between 0.004 and 0.008.">CRR (unitless)</td>
-          <td><input class="textfield" type="text" name="crr" value="0.005" required /></td>
+          <td><input class="textfield" type="text" name="crr" value="{{ session['crr'] if session['crr'] else '0.005' }}" required /></td>
         </tr>
         <tr>
           <td title="Room temperature is about 25 deg celsius.">Temperature (celsius)</td>
-          <td><input class="textfield" type="text" name="temp" value="25" required /></td>
+          <td><input class="textfield" type="text" name="temp" value="{{ session['temp'] if session['temp'] else '25' }}" required /></td>
         </tr>
         <tr>
           <td title="The dewpoint is the temperature at which water vapor condenses into liquid water at the same rate at which it evaporates. Look this up in a weather report.">Dewpoint (celsius)</td>
-          <td><input class="textfield" type="text" name="dewpoint" value="8.5" required /></td>
+          <td><input class="textfield" type="text" name="dewpoint" value="{{ session['dewpoint'] if session['dewpoint'] else '8.5' }}" required /></td>
         </tr>
         <tr>
           <td title="The air pressure (measured here in Pascals) is used to compute the air density. One atmosphere is 101,800 Pascals, decreasing with altitude.">Air pressure (pascals)</td>
-          <td><input class="textfield" type="text" name="pressure" value="101800" required /></td>
+          <td><input class="textfield" type="text" name="pressure" value="{{ session['pressure'] if session['pressure'] else '101800' }}" required /></td>
         </tr>
         <tr>
           <td title="An internal parameter used to control the granularity of the segment model. Larger values here will result in reduced precision but may be required to avoid outlier data points.">Decimation Threshold (m)</td>
-          <td><input class="textfield" type="text" name="resolution" value="35" required /></td>
+          <td><input class="textfield" type="text" name="resolution" value="{{ session['resolution'] if session['resolution'] else '35' }}" required /></td>
         </tr>
-      </table><br>
+      </table>
     </div>
-    <br>
-    <h2><span title="The maximum amount of power you can produce for each given interval. The optimizer will interpolate linearly between these points. We treat durations inside of 1m and outside of 60m as 1m, and 60m, respectively.">Critical Power</span></h2>
-          <table>
-            <tr>
-              <td align=center>1m</td>
-              <td align=center>3m</td>
-              <td align=center>5m</td>
-              <td align=center>10m</td>
-              <td align=center>20m</td>
-              <td align=center>30m</td>
-              <td align=center>60m</td>
-            </tr>
-            <tr>
-              <td><input class="textfield_power" type="text" name="1mPower" value="{{ power60 if power60 else 563 }}" placeholder="563" required /></td>
-              <td><input class="textfield_power" type="text" name="3mPower" value="{{ power180 if power180 else 402 }}" placeholder="402" required /></td>
-              <td><input class="textfield_power" type="text" name="5mPower" value="{{ power300 if power300 else 363 }}" placeholder="363" required /></td>
-              <td><input class="textfield_power" type="text" name="10mPower" value="{{ power600 if power600 else 320 }}" placeholder="320" required /></td>
-              <td><input class="textfield_power" type="text" name="20mPower" value="{{ power1200 if power1200 else 303 }}" placeholder="303" required /></td>
-              <td><input class="textfield_power" type="text" name="30mPower" value="{{ power1800 if power1800 else 299 }}" placeholder="299" required /></td>
-              <td><input class="textfield_power" type="text" name="60mPower" value="{{ power3600 if power3600 else 275 }}" placeholder="275" required /></td>
-            </tr>
-          </table><br>
-        <input type="submit" class=largebtn value="Optimize!">
+    <h2>
+      <span title="The maximum amount of power you can produce for each given interval. The optimizer will interpolate linearly between these points. We treat durations inside of 1m and outside of 60m as 1m, and 60m, respectively.">Critical Power</span>
+    </h2>
+    <table>
+      <tr>
+        <td align="center">1m</td>
+        <td align="center">3m</td>
+        <td align="center">5m</td>
+        <td align="center">10m</td>
+        <td align="center">20m</td>
+        <td align="center">30m</td>
+        <td align="center">60m</td>
+      </tr>
+      <tr>
+        <td><input class="textfield_power" type="text" name="1mPower" value="{{ session['1mPower'] if session['1mPower'] else 563 }}" placeholder="563" required /></td>
+        <td><input class="textfield_power" type="text" name="3mPower" value="{{ session['3mPower'] if session['3mPower'] else 402 }}" placeholder="402" required /></td>
+        <td><input class="textfield_power" type="text" name="5mPower" value="{{ session['5mPower'] if session['5mPower'] else 363 }}" placeholder="363" required /></td>
+        <td><input class="textfield_power" type="text" name="10mPower" value="{{ session['10mPower'] if session['10mPower'] else 320 }}" placeholder="320" required /></td>
+        <td><input class="textfield_power" type="text" name="20mPower" value="{{ session['20mPower'] if session['20mPower'] else 303 }}" placeholder="303" required /></td>
+        <td><input class="textfield_power" type="text" name="30mPower" value="{{ session['30mPower'] if session['30mPower'] else 299 }}" placeholder="299" required /></td>
+        <td><input class="textfield_power" type="text" name="60mPower" value="{{ session['60mPower'] if session['60mPower'] else 275 }}" placeholder="275" required /></td>
+      </tr>
+    </table>
+    <input type="submit" class="largebtn" value="Optimize!">
   </form>
   <div id="output">
     <div id="console">
-      <textarea name="console" id="console">{{ console }}</textarea>
+      <textarea name="console" id="console">{{ session['console'] }}</textarea>
     </div>
   </div>
 </center>
