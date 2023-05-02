@@ -1,0 +1,14 @@
+{
+    "manifest_version": 3,
+    "name": "SegmentOpt",
+    "description": "Segment time predictor for Strava",
+    "version": "1.0",
+    "action": {
+        "default_popup": "popup/hello_segmentopt.html",
+        "default_icon": "images/hello.png"
+    },
+    "content_scripts": [{
+      "js": ["scripts/segmentopt.js"],
+      "matches": ["https://*.strava.com/segments/*"]
+    }]
+}
